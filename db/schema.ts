@@ -7,7 +7,7 @@ import {
   timestamp,
   varchar,
 // @ts-ignore
-} from "drizzle-orm/mysql-core";
+} from "npm:drizzle-orm@^0.35.3/mysql-core";
 
 export const subjects = mysqlTable("subjects", {
   id: varchar("id", { length: 36 }).primaryKey(),

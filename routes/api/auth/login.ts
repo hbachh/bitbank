@@ -3,7 +3,7 @@ import { getDb } from "../../../lib/db.ts";
 import { users } from "../../../db/schema.ts";
 import { signToken, verifyPassword } from "../../../lib/auth.ts";
 // @ts-ignore
-import { eq } from "drizzle-orm";
+import { eq } from "npm:drizzle-orm@^0.35.3";
 import { setCookie } from "$std/http/cookie.ts";
 
 export const handler = {
