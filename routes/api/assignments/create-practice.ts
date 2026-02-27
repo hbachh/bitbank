@@ -4,7 +4,7 @@ import { verifyToken } from "../../../lib/jwt.ts";
 import { getDb } from "../../../lib/db.ts";
 import { assignments, questions } from "../../../db/schema.ts";
 import { v4 as uuidv4 } from "npm:uuid@^9.0.1";
-import { and, eq, or } from "npm:drizzle-orm@0.35.3";
+import { and, eq } from "npm:drizzle-orm@0.35.3";
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -24,7 +24,7 @@ export const handler = {
       const baseConditions = [
         eq(questions.topicId, topicId),
         lessonId ? eq(questions.lessonId, lessonId) : undefined,
-        eq(questions.isPublic, true), // Students only get public questions for practice
+        eq(questions.isPublic, true),
       ].filter(Boolean);
 
       const allAvailableQuestions = await db
@@ -38,9 +38,10 @@ export const handler = {
 
       const shuffle = (array: any[]) => array.sort(() => Math.random() - 0.5);
 
-      const selectedTN = shuffle(tnQuestions).slice(0, config.tnCount);
-      const selectedTF = shuffle(tfQuestions).slice(0, config.tfCount);
-      const selectedSA = shuffle(saQuestions).slice(0, config.saCount);
+      // Gracefully handle fewer questions than requested by taking all available
+      const selectedTN = shuffle(tnQuestions).slice(0, Math.min(tnQuestions.length, config.tnCount));
+      const selectedTF = shuffle(tfQuestions).slice(0, Math.min(tfQuestions.length, config.tfCount));
+      const selectedSA = shuffle(saQuestions).slice(0, Math.min(saQuestions.length, config.saCount));
 
       const finalQuestionIds = [
         ...selectedTN.map((q) => q.id),
@@ -50,7 +51,7 @@ export const handler = {
 
       if (finalQuestionIds.length === 0) {
         return new Response(
-          JSON.stringify({ error: "Không tìm thấy câu hỏi phù hợp." }),
+          JSON.stringify({ error: "Không tìm thấy câu hỏi nào cho bài học này. Vui lòng liên hệ giáo viên để thêm câu hỏi." }),
           { status: 400 },
         );
       }
@@ -59,7 +60,7 @@ export const handler = {
       await db.insert(assignments).values({
         id,
         title,
-        teacherId: user.id, // For practice, the user is the 'teacher' (owner)
+        teacherId: user.id,
         type: "practice",
         config: JSON.stringify(config),
         questionIds: JSON.stringify(finalQuestionIds),
@@ -70,6 +71,7 @@ export const handler = {
         headers: { "Content-Type": "application/json" },
       });
     } catch (error: any) {
+      console.error("Practice creation error:", error);
       return new Response(error.message, { status: 500 });
     }
   },
