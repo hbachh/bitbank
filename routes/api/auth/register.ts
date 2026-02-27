@@ -3,6 +3,7 @@ import { getDb } from "../../../lib/db.ts";
 import { users } from "../../../db/schema.ts";
 import { hashPassword } from "../../../lib/auth.ts";
 import { eq } from "drizzle-orm";
+import { sendVerificationEmail } from "../../../lib/email.ts";
 
 // Email validation for teacher registration
 function validateTeacherEmail(email: string): boolean {
@@ -69,8 +70,14 @@ export const handler = {
         verificationToken,
       });
 
-      // TODO: Send verification email via SMTP
-      // For now, return success with verification required message
+      // Send verification email via SMTP
+      try {
+        await sendVerificationEmail(email, name, verificationToken);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // We still return success because the user was created, but log the error
+      }
+
       return new Response(
         JSON.stringify({ 
           success: true, 

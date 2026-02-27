@@ -22,7 +22,7 @@ try {
 
 export const config = {
   get(key: string): string | undefined {
-    return configData[key];
+    return configData[key] || Deno.env.get(key);
   }
 };
 
