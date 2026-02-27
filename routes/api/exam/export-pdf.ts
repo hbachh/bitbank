@@ -24,7 +24,6 @@ export const handler: Handlers = {
       const {
         classId,
         examId,
-        schoolName,
         topicName,
         students,
         questions,
@@ -36,6 +35,7 @@ export const handler: Handlers = {
       }
 
       const db = await getDb();
+      const schoolName = user.school || body.schoolName || "TRƯỜNG THPT X";
 
       // Create PDF document with proper configuration
       const doc = new jsPDF({

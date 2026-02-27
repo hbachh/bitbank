@@ -64,8 +64,8 @@ export const handler: Handlers = {
       };
 
       // Add header
-      addText("TRƯỜNG ĐẠI HỌC QUỐC GIA HÀ NỘI", 16, true);
-      addText("ĐẠI HỌC CÔNG NGHỆ", 14, true);
+      const schoolName = user.school || "TRƯỜNG ĐẠI HỌC QUỐC GIA HÀ NỘI";
+      addText(schoolName, 16, true);
       yPosition += 10;
 
       // Document title
