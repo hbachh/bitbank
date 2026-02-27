@@ -2,6 +2,7 @@ import { drizzle } from "npm:drizzle-orm@0.35.3/tidb-serverless";
 import { connect } from "npm:@tidbcloud/serverless@0.1.0";
 import { sql } from "npm:drizzle-orm@0.35.3";
 import * as schema from "../db/schema.ts";
+import config from "@/lib/config.ts";
 
 function logError(message: string, error: unknown) {
   if (error instanceof Error) {
@@ -12,8 +13,8 @@ function logError(message: string, error: unknown) {
 }
 
 const TIDB_URI =
-  Deno.env.get("TIDB_DATABASE_URL") ||
-  Deno.env.get("TIDB_URI") ||
+  config.get("TIDB_DATABASE_URL") ||
+  config.get("TIDB_URI") ||
   "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/aiyoungguru";
 
 let dbInstance: any = null;

@@ -1,7 +1,8 @@
 import { jwtVerify, SignJWT } from "npm:jose";
+import config from "@/lib/config.ts";
 
 const SECRET_KEY = new TextEncoder().encode(
-  Deno.env.get("JWT_SECRET") || "aiyoungguru-secret-key-2024",
+  config.get("JWT_SECRET") || "aiyoungguru-secret-key-2024",
 );
 
 export async function signToken(payload: any) {

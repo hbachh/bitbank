@@ -1,4 +1,5 @@
 import { FreshContext } from "$fresh/server.ts";
+import config from "@/lib/config.ts";
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -10,7 +11,7 @@ export const handler = {
         correctAnswer: string;
       };
 
-      const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMMA_API_KEY");
+      const apiKey = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY");
 
       if (!apiKey) {
         console.warn("AI API key (GEMINI_API_KEY or GEMMA_API_KEY) is not set. Using mock response.");

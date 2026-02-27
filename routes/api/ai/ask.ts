@@ -1,9 +1,10 @@
 import { FreshContext } from "$fresh/server.ts";
 import { getCookies } from "$std/http/cookie.ts";
 import { verifyToken } from "../../../lib/jwt.ts";
+import config from "@/lib/config.ts";
 
 // Google AI Studio API configuration
-const AI_API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMMA_API_KEY") || "";
+const AI_API_KEY = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY") || "";
 const AI_MODEL = "gemini-1.5-flash"; // Use Gemini 1.5 Flash for better reliability and performance
 const AI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`;
 
