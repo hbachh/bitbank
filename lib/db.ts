@@ -20,16 +20,17 @@ const TIDB_URI =
 let dbInstance: any = null;
 let clientInstance: any = null;
 
-const createDbConnection = async () => {
+const createDbConnection = async (retries = 3) => {
   if (dbInstance) return dbInstance;
 
-  try {
-    const client = connect({ url: TIDB_URI });
-    const db = drizzle(client, { schema });
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`Connecting to TiDB Serverless (Attempt ${attempt}/${retries})...`);
+      const client = connect({ url: TIDB_URI });
+      const db = drizzle(client, { schema });
 
-    // Ensure tables exist (Basic migration logic)
-    // Note: In production, it's better to use migrations, but we maintain the current pattern
-    await client.execute("SET NAMES utf8mb4");
+      // Test connection and set names
+      await client.execute("SET NAMES utf8mb4");
 
     const tableQueries = [
       `CREATE TABLE IF NOT EXISTS users (
