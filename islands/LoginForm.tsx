@@ -51,26 +51,26 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md border-2 md:border-4 border-black shadow-neo bg-white">
-      <CardHeader className="space-y-2 border-b-2 md:border-b-4 border-black pb-4 md:pb-6">
-        <CardTitle className="text-xl md:text-3xl font-black text-center uppercase italic tracking-tighter">
+    <Card className="w-full max-w-sm border-2 border-black shadow-neo-sm bg-white p-0">
+      <CardHeader className="space-y-1.5 border-b-2 border-black p-4 md:p-6 pb-3 md:pb-4">
+        <CardTitle className="text-xl md:text-2xl font-black text-center uppercase italic tracking-tighter">
           ĐĂNG NHẬP
         </CardTitle>
-        <CardDescription className="text-center font-bold uppercase text-black text-[10px] md:text-sm">
+        <CardDescription className="text-center font-bold uppercase text-black text-[9px] md:text-xs">
           Nhập email và mật khẩu để truy cập hệ thống
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit} className="mt-4 md:mt-6">
-        <CardContent className="space-y-4 md:space-y-6">
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
           {error && (
-            <div className="p-3 md:p-4 text-[10px] md:text-sm font-black uppercase bg-red-100 border-2 border-black shadow-neo-sm text-red-600">
+            <div className="p-2.5 md:p-3 text-[9px] md:text-xs font-black uppercase bg-red-100 border-2 border-black shadow-neo-sm text-red-600">
               {error}
             </div>
           )}
-          <div className="space-y-2 md:space-y-3">
+          <div className="space-y-1.5 md:space-y-2">
             <Label
               htmlFor="email"
-              className="font-black uppercase italic tracking-tight text-[10px] md:text-xs"
+              className="font-black uppercase italic tracking-tight text-[9px] md:text-xs"
             >
               EMAIL
             </Label>
@@ -81,13 +81,13 @@ export default function LoginForm() {
               value={email}
               onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
               required
-              className="border-2 border-black h-10 md:h-12"
+              className="border-2 border-black h-9 md:h-10"
             />
           </div>
-          <div className="space-y-2 md:space-y-3">
+          <div className="space-y-1.5 md:space-y-2">
             <Label
               htmlFor="password"
-              className="font-black uppercase italic tracking-tight text-[10px] md:text-xs"
+              className="font-black uppercase italic tracking-tight text-[9px] md:text-xs"
             >
               MẬT KHẨU
             </Label>
@@ -97,24 +97,26 @@ export default function LoginForm() {
               value={password}
               onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
               required
-              className="border-2 border-black h-10 md:h-12"
+              className="border-2 border-black h-9 md:h-10"
             />
           </div>
+          <div className="flex justify-end mt-1">
+            <a href="/reset-password" class="text-[9px] md:text-[10px] font-black uppercase underline italic hover:text-primary transition-colors">
+              Quên mật khẩu?
+            </a>
+          </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 md:space-y-6 pt-4 md:pt-6 pb-6 md:pb-8">
+        <CardFooter className="flex flex-col space-y-3 md:space-y-4 p-4 md:p-6 pt-0 pb-6 md:pb-8">
           <Button
             type="submit"
-            className="w-full h-10 md:h-12 text-sm md:text-lg uppercase bg-primary"
             disabled={loading}
+            className="w-full border-2 border-black shadow-neo-sm hover:shadow-none transition-all h-9 md:h-11 font-black uppercase italic tracking-tighter bg-primary"
           >
-            {loading ? "ĐANG XỬ LÝ..." : "ĐĂNG NHẬP"}
+            {loading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
           </Button>
-          <div className="text-[10px] md:text-sm text-center font-bold uppercase tracking-tight">
+          <div className="text-center text-[9px] md:text-xs font-bold uppercase italic tracking-tight">
             Chưa có tài khoản?{" "}
-            <a
-              href="/register"
-              className="underline decoration-4 decoration-secondary hover:bg-secondary/20 transition-colors"
-            >
+            <a href="/register" className="font-black underline hover:text-primary transition-colors">
               Đăng ký ngay
             </a>
           </div>

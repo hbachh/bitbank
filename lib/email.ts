@@ -13,6 +13,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const NEO_BRUTALISM_STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap');
   body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #F3F4F6; padding: 20px; }
   .container { 
     max-width: 600px; 
@@ -96,6 +97,46 @@ export async function sendVerificationEmail(email: string, name: string, token: 
     from: `"Bitbank" <${config.get("SMTP_FROM")}>`,
     to: email,
     subject: "XÁC THỰC TÀI KHOẢN BITBANK",
+    html,
+  });
+}
+
+export async function sendResetPasswordEmail(email: string, name: string, token: string) {
+  const origin = config.get("ORIGIN") || "https://bitbank.is-app.top";
+  const resetUrl = `${origin}/reset-password?token=${token}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>${NEO_BRUTALISM_STYLE}</style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>BITBANK</h1>
+          </div>
+          <div class="content">
+            <p>XIN CHÀO ${name.toUpperCase()},</p>
+            <p>BẠN ĐÃ YÊU CẦU KHÔI PHỤC MẬT KHẨU CHO TÀI KHOẢN BITBANK CỦA MÌNH.</p>
+            <p>VUI LÒNG NHẤN VÀO NÚT DƯỚI ĐÂY ĐỂ TIẾP TỤC ĐẶT LẠI MẬT KHẨU:</p>
+            <p style="font-size: 12px; color: #666;">LIÊN KẾT NÀY SẼ HẾT HẠN TRONG 1 GIỜ.</p>
+          </div>
+          <div class="button-container">
+            <a href="${resetUrl}" class="button">ĐẶT LẠI MẬT KHẨU</a>
+          </div>
+          <div class="footer">
+            &copy; ${new Date().getFullYear()} BITBANK. ALL RIGHTS RESERVED.
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return await transporter.sendMail({
+    from: `"Bitbank" <${config.get("SMTP_FROM")}>`,
+    to: email,
+    subject: "KHÔI PHỤC MẬT KHẨU BITBANK",
     html,
   });
 }

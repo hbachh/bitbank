@@ -103,5 +103,7 @@ export const users = mysqlTable("users", {
   school: varchar("school", { length: 255 }), // New field for identifying schools
   emailVerified: boolean("email_verified").default(false), // New field for email verification
   verificationToken: varchar("verification_token", { length: 255 }), // New field for email verification token
+  resetToken: varchar("reset_token", { length: 255 }),
+  resetTokenExpires: timestamp("reset_token_expires"),
   createdAt: timestamp("created_at").defaultNow(),
 });

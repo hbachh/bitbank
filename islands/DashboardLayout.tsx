@@ -35,14 +35,14 @@ export default function DashboardLayout(
         user={user}
         pathname={pathname}
         className={cn(
-          "transition-transform duration-300 z-50 md:translate-x-0",
+          "transition-transform duration-300 z-50 md:translate-x-0 w-48 md:w-52 lg:w-56",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       />
 
-      <div className="flex-1 md:ml-56 lg:ml-60 flex flex-col min-w-0">
+      <div className="flex-1 md:ml-48 lg:ml-52 flex flex-col min-w-0">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-3 md:p-4 lg:p-6 max-w-6xl mx-auto w-full">
+        <main className="flex-1 p-3 md:p-4 lg:p-5 max-w-5xl mx-auto w-full">
           {children}
         </main>
       </div>

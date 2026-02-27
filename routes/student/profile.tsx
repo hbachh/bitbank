@@ -56,14 +56,9 @@ export default function StudentProfilePage({ state }: PageProps) {
             <Button
               variant="outline"
               className="h-12 px-6 border-4 border-black font-black uppercase italic hover:bg-black hover:text-white transition-colors"
+              onClick={() => window.location.href = "/change-password"}
             >
               Đổi mật khẩu
-            </Button>
-            <Button
-              variant="outline"
-              className="h-12 px-6 border-4 border-black font-black uppercase italic hover:bg-black hover:text-white transition-colors"
-            >
-              Xem lịch sử đăng nhập
             </Button>
           </div>
         </div>

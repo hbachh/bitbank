@@ -56,6 +56,8 @@ const createDbConnection = async (retries = 3) => {
         school varchar(255),
         email_verified boolean DEFAULT false,
         verification_token varchar(255),
+        reset_token varchar(255),
+        reset_token_expires timestamp NULL,
         created_at timestamp DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 

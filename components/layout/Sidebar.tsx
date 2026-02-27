@@ -18,6 +18,7 @@ interface SidebarProps {
     name: string;
     role: string;
     school?: string | null;
+    grade?: string | null;
   } | null;
   pathname?: string;
 }
@@ -62,7 +63,7 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
             pathname?.startsWith("/class"),
         },
         {
-          label: "BÀI TẬP & ÔN TẬP",
+          label: "BÀI TẬP",
           icon: BookOpen,
           href: "/student/exam",
           active: pathname?.startsWith("/student/exam") ||
@@ -79,14 +80,14 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
       routes = [
         ...routes,
         {
-          label: "QUẢN LÝ LỚP",
+          label: "LỚP HỌC",
           icon: GraduationCap,
           href: "/teacher/classes",
           active: pathname?.startsWith("/teacher/classes") ||
             pathname?.startsWith("/class"),
         },
         {
-          label: "NGÂN HÀNG CÂU HỎI",
+          label: "NGÂN HÀNG",
           icon: ClipboardList,
           href: "/teacher/exam",
           active: pathname?.startsWith("/teacher/exam"),
@@ -108,43 +109,21 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
       routes = [
         ...routes,
         {
-          label: "NGÂN HÀNG CÂU HỎI",
-          icon: BookOpen,
-          href: "/admin/questions",
-          active: pathname?.startsWith("/admin/questions"),
+          label: "LỚP HỌC",
+          icon: Users,
+          href: "/admin/classes",
+          active: pathname?.startsWith("/admin/classes"),
         },
         {
-          label: "DANH SÁCH MÔN HỌC",
+          label: "NGƯỜI DÙNG",
           icon: LayoutList,
-          href: "/admin/subjects",
-          active: pathname?.startsWith("/admin/subjects"),
+          href: "/admin/users",
+          active: pathname?.startsWith("/admin/users"),
         },
       ];
     }
 
-    if (user) {
-      routes.push({
-        label: "HỒ SƠ",
-        icon: User,
-        href: `${basePath}/profile`,
-        active: pathname?.endsWith("/profile"),
-      });
-    }
-
     return routes;
-  };
-
-  const getRoleName = (role: string | undefined) => {
-    switch (role) {
-      case "admin":
-        return "QUẢN TRỊ VIÊN";
-      case "teacher":
-        return "GIÁO VIÊN";
-      case "student":
-        return "HỌC SINH";
-      default:
-        return "HỌC SINH";
-    }
   };
 
   const routes = getRoutes();
@@ -152,60 +131,63 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
   return (
     <div
       className={cn(
-        "pb-2 h-screen border-r-2 md:border-r-4 border-black bg-white w-56 md:w-60 fixed left-0 top-0 z-50",
+        "fixed inset-y-0 left-0 flex flex-col bg-white border-r-2 md:border-r-4 border-black",
         className,
       )}
     >
-      <div className="space-y-3 py-2 flex flex-col justify-between h-full">
-        <div className="px-3 py-1.5 flex-1 overflow-y-auto">
-          <h2 className="mb-4 px-3 text-xl font-black uppercase tracking-tighter italic border-b-2 border-black pb-3">
-            BITBANK
-          </h2>
-          <div className="space-y-1.5">
-            {routes.map((route) => (
-              <a
-                key={route.href + route.label}
-                href={route.href}
-                className="block w-full"
-              >
-                <Button
-                  variant={route.active ? "default" : "ghost"}
-                  className={cn(
-                    "w-full justify-start font-black uppercase italic text-xs tracking-tight border-2 border-transparent h-10",
-                    route.active &&
-                      "bg-primary border-black shadow-neo-sm translate-x-[1px] translate-y-[1px]",
-                  )}
-                >
-                  <route.icon className="mr-3 h-4 w-4" />
-                  {route.label}
-                </Button>
-              </a>
-            ))}
-          </div>
+      <div className="px-2 py-1 flex-1 overflow-y-auto">
+        <h2 className="mb-2 px-2 text-base md:text-lg font-black uppercase tracking-tighter italic border-b-2 border-black pb-1.5">
+          BITBANK
+        </h2>
+        <div className="space-y-1">
+          {routes.map((route) => (
+            <a
+              key={route.href}
+              href={route.href}
+              className={cn(
+                "flex items-center gap-2 px-2 py-1.5 text-[11px] md:text-xs font-black uppercase italic tracking-tight border-2 border-transparent transition-all hover:bg-accent hover:border-black hover:shadow-neo-sm",
+                route.active &&
+                  "bg-primary border-black shadow-neo-sm translate-x-[2px] -translate-y-[2px]",
+              )}
+            >
+              <route.icon className="size-3.5 md:size-4" />
+              {route.label}
+            </a>
+          ))}
         </div>
-        <div className="px-3 py-3 border-t-2 md:border-t-3 border-black bg-accent/10">
-          <div className="mb-3 px-3 space-y-1">
-            <p className="text-[8px] font-black uppercase opacity-50 tracking-widest text-black">
-              ĐANG ĐĂNG NHẬP
-            </p>
-            <p className="text-xs font-black uppercase italic truncate text-black">
-              {user?.name || "KHÁCH"}
-            </p>
-            <p className="text-[9px] font-black uppercase bg-primary border border-black px-1.5 py-0.5 shadow-neo-sm">
-                {getRoleName(role)}
-              </p>
-          </div>
+      </div>
+
+      <div className="p-2 border-t-2 md:border-t-4 border-black bg-accent/5">
+        <div className="mb-2 px-2 py-1.5 border-2 border-black bg-white shadow-neo-sm">
+          <p className="text-[10px] font-black uppercase truncate italic">
+            {user?.name || "KHÁCH"}
+          </p>
+          <p className="text-[8px] font-bold uppercase text-muted-foreground truncate">
+            {user?.role === "student"
+              ? `HỌC SINH LỚP ${user?.grade || "?"}`
+              : user?.role === "teacher"
+              ? "GIÁO VIÊN"
+              : "QUẢN TRỊ VIÊN"}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-1">
           <Button
             variant="outline"
-            className="w-full justify-start font-black uppercase italic text-xs border-2 border-black hover:bg-red-500 hover:text-white transition-colors h-10"
-            onClick={() => {
-              fetch("/api/auth/logout", { method: "POST" }).then(() => {
-                window.location.href = "/login";
-              });
-            }}
+            size="xs"
+            className="w-full text-[9px] md:text-[10px] p-0"
+            onClick={() => window.location.href = "/profile"}
           >
-            <LogOut className="mr-3 h-4 w-4" />
-            ĐĂNG XUẤT
+            <User className="mr-1 size-2.5 md:size-3" />
+            HỒ SƠ
+          </Button>
+          <Button
+            variant="destructive"
+            size="xs"
+            className="w-full text-[9px] md:text-[10px] p-0 shadow-neo-sm"
+            onClick={() => window.location.href = "/logout"}
+          >
+            <LogOut className="mr-1 size-2.5 md:size-3" />
+            THOÁT
           </Button>
         </div>
       </div>

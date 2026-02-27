@@ -73,3 +73,27 @@
     @apply bg-[var(--background)] text-[var(--foreground)];
   }
 }
+
+/* Custom Prose for Markdown in AI Response */
+.prose {
+  color: inherit;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply font-black uppercase italic tracking-tighter mt-4 mb-2 border-b-2 border-black pb-1;
+}
+.prose h1 { @apply text-lg; }
+.prose h2 { @apply text-base; }
+.prose h3 { @apply text-sm; }
+.prose p { @apply mb-3 leading-relaxed; }
+.prose ul, .prose ol { @apply mb-3 ml-4; }
+.prose ul { @apply list-disc; }
+.prose ol { @apply list-decimal; }
+.prose li { @apply mb-1; }
+.prose code { @apply px-1.5 py-0.5 bg-accent/20 border border-black font-mono text-[11px] font-bold; }
+.prose pre { @apply p-3 bg-black text-white border-2 border-black shadow-neo-sm overflow-x-auto mb-4; }
+.prose pre code { @apply bg-transparent border-none p-0 text-white; }
+.prose strong { @apply font-black; }
+.prose blockquote { @apply border-l-4 border-primary pl-4 italic my-4; }
+.prose table { @apply w-full border-collapse border-2 border-black mb-4; }
+.prose th, .prose td { @apply border border-black p-2 text-left; }
+.prose th { @apply bg-primary font-black uppercase italic text-[11px]; }

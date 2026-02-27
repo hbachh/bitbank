@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+import { marked } from "marked";
 
 interface Message {
   id: string;
@@ -113,6 +114,14 @@ export default function TeacherAskAI({ user }: TeacherAskAIProps) {
     }
   };
 
+  const renderMarkdown = (text: string) => {
+    try {
+      return { __html: marked.parse(text) };
+    } catch (e) {
+      return { __html: text };
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-4xl mx-auto">
@@ -165,8 +174,15 @@ export default function TeacherAskAI({ user }: TeacherAskAIProps) {
                         : 'bg-gray-100 text-black border-2 border-gray-300'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    <p className="text-xs opacity-60 mt-1">
+                    {message.role === 'user' ? (
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <div 
+                        className="prose prose-sm max-w-none dark:prose-invert"
+                        dangerouslySetInnerHTML={renderMarkdown(message.content)}
+                      />
+                    )}
+                    <p className="text-[10px] opacity-60 mt-1">
                       {new Date(message.timestamp).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit'

@@ -26,31 +26,31 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-12 md:h-14 items-center gap-3 md:gap-4 border-b-2 md:border-b-4 border-black bg-white px-3 md:px-5 sticky top-0 z-30">
+    <header className="flex h-11 md:h-12 items-center gap-2 md:gap-3 border-b-2 border-black bg-white px-3 md:px-4 sticky top-0 z-30">
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden border-2 border-black h-9 w-9 p-0"
+        className="md:hidden border-2 border-black h-8 w-8 p-0"
         onClick={onMenuClick}
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-4 w-4" />
         <span className="sr-only">Toggle Menu</span>
       </Button>
       <div className="w-full flex-1">
-        <h1 className="text-sm md:text-lg font-black uppercase tracking-tight italic">
+        <h1 className="text-xs md:text-sm font-black uppercase tracking-tight italic">
           {getRoleName(user?.role)}
         </h1>
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <div className="hidden sm:flex flex-col items-end">
-          <span className="text-[9px] md:text-[11px] font-black uppercase">
+          <span className="text-[9px] md:text-[10px] font-black uppercase italic">
             {user?.name || "NGƯỜI DÙNG"}
           </span>
-          <span className="text-[9px] md:text-[11px] bg-primary border border-black px-1.5 py-[1px] font-black uppercase italic">
+          <span className="text-[8px] md:text-[9px] bg-primary border border-black px-1.5 py-[0.5px] font-black uppercase italic mt-0.5">
             {getRoleName(user?.role)}
           </span>
         </div>
-        <div className="h-7 w-7 md:h-9 md:w-9 border-2 md:border-4 border-black bg-primary shadow-neo-sm flex items-center justify-center font-black text-[11px] md:text-sm">
+        <div className="h-7 w-7 md:h-8 md:w-8 border-2 border-black bg-primary shadow-neo-sm flex items-center justify-center font-black text-[10px] md:text-xs italic">
           {user?.name?.[0]?.toUpperCase() || "U"}
         </div>
       </div>

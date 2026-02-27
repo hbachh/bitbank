@@ -33,36 +33,36 @@ export default function StudentDashboard({ data, state }: PageProps) {
   const user = state?.user;
 
   return (
-    <div className="space-y-5 md:space-y-7">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic text-black">
+          <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic text-black">
             Xin chào, {user?.name || "Học sinh"}!
           </h1>
-          <p className="text-[9px] md:text-xs text-black font-bold uppercase tracking-tight opacity-70">
+          <p className="text-[8px] md:text-[10px] text-black font-bold uppercase tracking-tight opacity-70">
             Chọn một hoạt động để bắt đầu học tập.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2.5 md:gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {/* Ôn tập thông minh */}
-        <Card className="border-2 border-black shadow-neo hover:-translate-y-1 transition-transform bg-white">
-          <div className="p-3 md:p-4 space-y-2.5 md:space-y-3">
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 md:p-2 bg-primary border-2 border-black">
-                <BookOpen className="h-4 w-4 md:h-4 md:w-4 text-black" />
+        <Card className="border-2 border-black shadow-neo-sm hover:-translate-y-0.5 transition-transform bg-white p-0">
+          <div className="p-2.5 md:p-3.5 space-y-2 md:space-y-2.5">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="p-1 md:p-1.5 bg-primary border-2 border-black">
+                <BookOpen className="h-3.5 w-3.5 md:h-4 md:w-4 text-black" />
               </div>
-              <h3 className="text-base md:text-lg font-black uppercase italic text-black">
+              <h3 className="text-sm md:text-base font-black uppercase italic text-black">
                 Ôn tập thông minh
               </h3>
             </div>
-            <p className="text-[9px] md:text-xs font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
+            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
               Tự tạo bộ câu hỏi ngẫu nhiên dựa trên khối lớp của bạn
             </p>
 
-            <a href="/student/exam" className="block w-full pt-1.5">
-              <Button className="w-full h-9 md:h-10 text-xs md:text-sm font-black uppercase italic border-2 border-black shadow-neo-sm hover:shadow-none translate-x-[-1px] translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all bg-white text-black">
+            <a href="/student/exam" className="block w-full pt-1">
+              <Button size="sm" className="w-full font-black uppercase italic border-2 border-black shadow-neo-sm hover:shadow-none transition-all bg-white text-black">
                 Bắt đầu làm bài
               </Button>
             </a>
@@ -70,28 +70,28 @@ export default function StudentDashboard({ data, state }: PageProps) {
         </Card>
 
         {/* Lớp học */}
-        <Card className="border-2 border-black shadow-neo hover:-translate-y-1 transition-transform bg-white">
-          <div className="p-3 md:p-4 space-y-2.5 md:space-y-3">
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 md:p-2 bg-secondary border-2 border-black">
-                <School className="h-4 w-4 md:h-5 md:w-5 text-black" />
+        <Card className="border-2 border-black shadow-neo-sm hover:-translate-y-0.5 transition-transform bg-white p-0">
+          <div className="p-2.5 md:p-3.5 space-y-2 md:space-y-2.5">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="p-1 md:p-1.5 bg-secondary border-2 border-black">
+                <School className="h-3.5 w-3.5 md:h-4 md:w-4 text-black" />
               </div>
-              <h3 className="text-base md:text-lg font-black uppercase italic text-black">
+              <h3 className="text-sm md:text-base font-black uppercase italic text-black">
                 Lớp học
               </h3>
             </div>
-            <p className="text-[9px] md:text-xs font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
+            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
               Tham gia lớp học mới hoặc xem danh sách
             </p>
 
-            <div className="flex gap-2 pt-1.5">
+            <div className="flex gap-2 pt-1">
               <a href="/student/classes" className="w-full">
-                <Button className="w-full h-9 md:h-10 px-3 text-[11px] md:text-xs font-black uppercase italic border-2 border-black bg-black text-white hover:bg-white hover:text-black transition-colors">
+                <Button size="sm" className="w-full font-black uppercase italic border-2 border-black bg-black text-white hover:bg-white hover:text-black transition-colors">
                   VÀO LỚP HỌC
                 </Button>
               </a>
             </div>
-            <div className="text-[8px] md:text-[11px] font-black uppercase italic space-y-1">
+            <div className="text-[8px] md:text-[9px] font-black uppercase italic">
               <p className="opacity-70 italic text-black">
                 {stats.classes > 0
                   ? `Đã tham gia ${stats.classes} lớp học`
@@ -102,22 +102,22 @@ export default function StudentDashboard({ data, state }: PageProps) {
         </Card>
 
         {/* Lịch sử */}
-        <Card className="border-2 border-black shadow-neo hover:-translate-y-1 transition-transform bg-white">
-          <div className="p-3 md:p-4 space-y-2.5 md:space-y-3">
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 md:p-2 bg-accent border-2 border-black">
-                <History className="h-4 w-4 md:h-5 md:w-5 text-black" />
+        <Card className="border-2 border-black shadow-neo-sm hover:-translate-y-0.5 transition-transform bg-white p-0">
+          <div className="p-2.5 md:p-3.5 space-y-2 md:space-y-2.5">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="p-1 md:p-1.5 bg-accent border-2 border-black">
+                <History className="h-3.5 w-3.5 md:h-4 md:w-4 text-black" />
               </div>
-              <h3 className="text-base md:text-lg font-black uppercase italic text-black">
+              <h3 className="text-sm md:text-base font-black uppercase italic text-black">
                 Lịch sử làm bài
               </h3>
             </div>
-            <p className="text-[9px] md:text-xs font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
+            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-tight opacity-70 text-black leading-tight">
               Xem lại kết quả và tiến độ
             </p>
 
-            <div className="space-y-2.5 md:space-y-3 font-black uppercase italic text-[10px] md:text-xs pt-1.5">
-              <p className="opacity-70 italic text-center py-1.5 md:py-3 text-black leading-tight">
+            <div className="space-y-2 md:space-y-2.5 font-black uppercase italic text-[9px] md:text-xs pt-1">
+              <p className="opacity-70 italic text-center py-1 md:py-2 text-black leading-tight">
                 {stats.submissions > 0
                   ? `Bạn đã thực hiện ${stats.submissions} bài làm`
                   : "Chưa có lịch sử làm bài"}
@@ -125,7 +125,8 @@ export default function StudentDashboard({ data, state }: PageProps) {
               <a href="/student/exam" className="block w-full">
                 <Button
                   variant="outline"
-                  className="w-full h-9 border-2 border-black font-black uppercase italic hover:bg-black hover:text-white transition-colors text-black text-[10px] md:text-xs"
+                  size="sm"
+                  className="w-full border-2 border-black font-black uppercase italic hover:bg-black hover:text-white transition-colors text-black"
                 >
                   XEM CHI TIẾT
                 </Button>
@@ -133,7 +134,6 @@ export default function StudentDashboard({ data, state }: PageProps) {
             </div>
           </div>
         </Card>
-
       </div>
     </div>
   );

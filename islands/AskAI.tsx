@@ -1,8 +1,9 @@
-import { useState } from "preact/hooks";
+import { useState, useEffect } from "preact/hooks";
 import { Button } from "../components/Button.tsx";
 import { Input } from "../components/Input.tsx";
 import { Label } from "../components/Label.tsx";
 import { Card } from "../components/Card.tsx";
+import { marked } from "marked";
 
 interface AskAIProps {
   user: {
@@ -19,6 +20,14 @@ export default function AskAI({ user }: AskAIProps) {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const renderMarkdown = (text: string) => {
+    try {
+      return { __html: marked.parse(text) };
+    } catch (e) {
+      return { __html: text };
+    }
+  };
 
   const handleAskAI = async () => {
     if (!question.trim()) return;
@@ -108,13 +117,14 @@ export default function AskAI({ user }: AskAIProps) {
           </Button>
 
           {answer && (
-            <div className="mt-4 p-4 border-4 border-black bg-gray-50">
-              <h4 className="text-sm font-black uppercase italic mb-2">
-                💡 Câu trả lời từ AI:
-              </h4>
-              <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                {answer}
-              </div>
+            <div className="grid gap-2 mt-4">
+              <Label className="text-xs font-black uppercase italic">
+                🤖 AI Trả lời
+              </Label>
+              <div 
+                className="p-4 border-4 border-black bg-white font-bold text-sm prose max-w-none"
+                dangerouslySetInnerHTML={renderMarkdown(answer)}
+              />
             </div>
           )}
         </div>

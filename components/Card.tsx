@@ -7,7 +7,7 @@ export function Card(
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-3 border-2 md:border-4 border-black shadow-neo-sm p-3 md:p-4",
+        "bg-card text-card-foreground flex flex-col gap-2 md:gap-3 border-2 border-black shadow-neo-sm p-2.5 md:p-3.5",
         className,
       )}
       {...props}
