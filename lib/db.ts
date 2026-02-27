@@ -146,9 +146,19 @@ const createDbConnection = async () => {
     console.log("Database initialized successfully with TiDB Serverless driver");
     return dbInstance;
   } catch (err) {
-    logError("Failed to initialize database connection:", err);
-    throw err;
+    console.error(`Database connection attempt ${attempt} failed:`, err instanceof Error ? err.message : err);
+    
+    if (attempt === retries) {
+      logError("Final attempt to initialize database connection failed:", err);
+      throw err;
+    }
+    
+    // Wait before retrying (exponential backoff)
+    const delay = Math.pow(2, attempt) * 1000;
+    console.log(`Waiting ${delay}ms before next retry...`);
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
+}
 };
 
 export const getDb = async () => {
