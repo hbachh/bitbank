@@ -107,12 +107,19 @@ export const handler = {
       });
 
       return response;
-    } catch (error) {
-      console.error("Login error:", error);
-      return new Response(JSON.stringify({ error: "Failed to login" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
+    } catch (error: any) {
+      console.error("Login process error details:", {
+        message: error.message,
+        stack: error.stack,
+        type: error.constructor.name
       });
+      return new Response(
+        JSON.stringify({ error: `Internal Server Error: ${error.message}` }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   },
 };

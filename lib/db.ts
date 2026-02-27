@@ -1,6 +1,6 @@
-import { drizzle } from "npm:drizzle-orm@0.35.3/tidb-serverless";
-import { connect } from "npm:@tidbcloud/serverless@0.1.0";
-import { sql } from "npm:drizzle-orm@0.35.3";
+import { drizzle } from "drizzle-orm/tidb-serverless";
+import { connect } from "@tidbcloud/serverless";
+import { sql } from "drizzle-orm";
 import * as schema from "../db/schema.ts";
 import config from "@/lib/config.ts";
 
@@ -14,9 +14,15 @@ function logError(message: string, error: unknown) {
 }
 
 const getUri = () => {
-  const uri = config.get("TIDB_DATABASE_URL") ||
+  let uri = config.get("TIDB_DATABASE_URL") ||
     config.get("TIDB_URI") ||
     "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com/aiyoungguru";
+  
+  uri = uri.trim();
+  if (!uri.startsWith("mysql://")) {
+    console.warn("TIDB_URI does not start with mysql://. Adding it automatically.");
+    uri = `mysql://${uri}`;
+  }
   return uri;
 };
 
@@ -40,8 +46,16 @@ const createDbConnection = async (retries = 3) => {
 
       // Basic query to verify connection
       console.log("Verifying connection with simple query...");
-      await db.execute(sql.raw("SELECT 1"));
-      console.log("Database connection verified.");
+      try {
+        const result = await db.execute(sql.raw("SELECT 1"));
+        console.log("Database connection verified:", JSON.stringify(result));
+      } catch (e: any) {
+        console.error("Verification query failed. Raw error:", e);
+        if (e.message && e.message.includes("JSON")) {
+          console.error("Potential JSON parsing issue from TiDB gateway. Check if the cluster is still waking up.");
+        }
+        throw e;
+      }
 
     const tableQueries = [
       `CREATE TABLE IF NOT EXISTS users (
