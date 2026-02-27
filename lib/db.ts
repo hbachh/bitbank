@@ -26,11 +26,14 @@ const createDbConnection = async (retries = 3) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Connecting to TiDB Serverless (Attempt ${attempt}/${retries})...`);
+      console.log(`Using URI: ${TIDB_URI.replace(/:([^:@]+)@/, ":****@")}`); // Log URI with hidden password
       const client = connect({ url: TIDB_URI });
       const db = drizzle(client, { schema });
 
       // Test connection and set names
+      console.log("Testing connection with 'SET NAMES utf8mb4'...");
       await client.execute("SET NAMES utf8mb4");
+      console.log("Connection test successful.");
 
     const tableQueries = [
       `CREATE TABLE IF NOT EXISTS users (
