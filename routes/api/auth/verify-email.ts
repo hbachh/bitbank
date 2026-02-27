@@ -36,7 +36,7 @@ export const handler = {
     return new Response(`
       <html>
         <head>
-          <title>Email Verified - AI Young Guru</title>
+          <title>Email Verified - Bitbank</title>
           <style>
             body { 
               font-family: Arial, sans-serif; 

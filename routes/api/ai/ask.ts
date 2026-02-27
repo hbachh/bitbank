@@ -43,11 +43,11 @@ export const handler = {
       // Prepare context based on user role and grade
       let contextPrompt = "";
       if (userRole === "student" && userGrade) {
-        contextPrompt = `Bạn là một trợ lý AI giảng dạy cho học sinh lớp ${userGrade} tại Việt Nam. Hãy trả lời câu hỏi của học sinh một cách đơn giản, dễ hiểu và phù hợp với trình độ. Sử dụng ngôn ngữ Việt Nam thân thiện, gần gũi. `;
+        contextPrompt = `Bạn là một trợ lý AI giảng dạy cho học sinh lớp ${userGrade} tại Việt Nam trên nền tảng Bitbank. Hãy trả lời câu hỏi của học sinh một cách đơn giản, dễ hiểu và phù hợp với trình độ. Sử dụng ngôn ngữ Việt Nam thân thiện, gần gũi. `;
       } else if (userRole === "teacher") {
-        contextPrompt = `Bạn là một trợ lý AI cho giáo viên tại Việt Nam. Hãy cung cấp câu trả lời chi tiết, chuyên sâu và có tính ứng dụng cao cho giáo viên. Bạn có thể truy cập tài liệu từ mọi khối lớp. Sử dụng ngôn ngữ Việt Nam chuyên nghiệp nhưng vẫn dễ hiểu. `;
+        contextPrompt = `Bạn là một trợ lý AI cho giáo viên tại Việt Nam trên nền tảng Bitbank. Hãy cung cấp câu trả lời chi tiết, chuyên sâu và có tính ứng dụng cao cho giáo viên. Bạn có thể truy cập tài liệu từ mọi khối lớp. Sử dụng ngôn ngữ Việt Nam chuyên nghiệp nhưng vẫn dễ hiểu. `;
       } else {
-        contextPrompt = `Bạn là một trợ lý AI giáo dục tại Việt Nam. Hãy trả lời câu hỏi một cách hữu ích và chính xác. Sử dụng ngôn ngữ Việt Nam. `;
+        contextPrompt = `Bạn là một trợ lý AI giáo dục tại Việt Nam trên nền tảng Bitbank. Hãy trả lời câu hỏi một cách hữu ích và chính xác. Sử dụng ngôn ngữ Việt Nam. `;
       }
 
       // Add textbook context constraint

@@ -20,7 +20,6 @@ const getUri = () => {
   
   uri = uri.trim();
   if (!uri.startsWith("mysql://")) {
-    console.warn("TIDB_URI does not start with mysql://. Adding it automatically.");
     uri = `mysql://${uri}`;
   }
   return uri;
@@ -36,24 +35,13 @@ const createDbConnection = async (retries = 3) => {
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`Connecting to TiDB Serverless (Attempt ${attempt}/${retries})...`);
-      // Mask password for logging
-      const maskedUri = currentUri.replace(/:([^:@]+)@/, ":****@");
-      console.log(`Using URI: ${maskedUri}`);
-      
       const client = connect({ url: currentUri });
       const db = drizzle(client, { schema });
 
       // Basic query to verify connection
-      console.log("Verifying connection with simple query...");
       try {
-        const result = await db.execute(sql.raw("SELECT 1"));
-        console.log("Database connection verified:", JSON.stringify(result));
+        await db.execute(sql.raw("SELECT 1"));
       } catch (e: any) {
-        console.error("Verification query failed. Raw error:", e);
-        if (e.message && e.message.includes("JSON")) {
-          console.error("Potential JSON parsing issue from TiDB gateway. Check if the cluster is still waking up.");
-        }
         throw e;
       }
 
@@ -169,7 +157,6 @@ const createDbConnection = async (retries = 3) => {
     dbInstance = db;
     clientInstance = client;
 
-    console.log("Database initialized successfully with TiDB Serverless driver");
     return dbInstance;
   } catch (err) {
     console.error(`Database connection attempt ${attempt} failed:`, err instanceof Error ? err.message : err);

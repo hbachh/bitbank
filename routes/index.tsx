@@ -42,8 +42,7 @@ export default function Home() {
           href="/"
           className="flex items-center gap-1.5 font-black text-xl md:text-2xl uppercase italic tracking-tighter"
         >
-          <span className="bg-primary px-2 border-2 border-black">AI</span>{" "}
-          YOUNG GURU
+          BITBANK
         </a>
         <div className="flex gap-3 text-xs md:text-sm font-black items-center">
           <nav className="flex gap-4 md:gap-6">

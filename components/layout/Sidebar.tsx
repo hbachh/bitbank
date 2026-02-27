@@ -159,7 +159,7 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
       <div className="space-y-3 py-2 flex flex-col justify-between h-full">
         <div className="px-3 py-1.5 flex-1 overflow-y-auto">
           <h2 className="mb-4 px-3 text-xl font-black uppercase tracking-tighter italic border-b-2 border-black pb-3">
-            AI YOUNG GURU
+            BITBANK
           </h2>
           <div className="space-y-1.5">
             {routes.map((route) => (
