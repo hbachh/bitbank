@@ -61,6 +61,12 @@ const createDbConnection = async (retries = 3) => {
         created_at timestamp DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+      // Migrations for existing users table
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified boolean DEFAULT false`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token varchar(255)`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token varchar(255)`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires timestamp NULL`,
+
       `CREATE TABLE IF NOT EXISTS subjects (
         id varchar(36) PRIMARY KEY,
         name varchar(255) NOT NULL,
