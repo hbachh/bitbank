@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0px;
+  --background: #fff;
+  --foreground: #000;
+  --card: #fff;
+  --card-foreground: #000;
+  --popover: #fff;
+  --popover-foreground: #000;
+  --primary: #a3e635; /* Lime-400 */
+  --primary-foreground: #000;
+  --secondary: #fb7185; /* Rose-400 */
+  --secondary-foreground: #000;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --accent: #fde047; /* Yellow-300 */
+  --accent-foreground: #000;
+  --destructive: #ef4444;
+  --border: #000;
+  --input: #fff;
+  --ring: #000;
+  --sidebar: #fff;
+  --sidebar-foreground: #000;
+  --sidebar-primary: #a3e635;
+  --sidebar-primary-foreground: #000;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #000;
+  --sidebar-border: #000;
+  --sidebar-ring: #000;
+
+  --shadow-neo: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-neo-lg: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-neo-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.dark {
+  --background: #18181b;
+  --foreground: #fff;
+  --card: #27272a;
+  --card-foreground: #fff;
+  --popover: #27272a;
+  --popover-foreground: #fff;
+  --primary: #a3e635;
+  --primary-foreground: #000;
+  --secondary: #fb7185;
+  --secondary-foreground: #000;
+  --muted: #3f3f46;
+  --muted-foreground: #a1a1aa;
+  --accent: #fde047;
+  --accent-foreground: #000;
+  --destructive: #ef4444;
+  --border: #fff;
+  --input: #27272a;
+  --ring: #fff;
+  --sidebar: #18181b;
+  --sidebar-foreground: #fff;
+  --sidebar-primary: #a3e635;
+  --sidebar-primary-foreground: #000;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #fff;
+  --sidebar-border: #fff;
+  --sidebar-ring: #fff;
+}
+
+@layer base {
+  * {
+    @apply border-[var(--border)] outline-[var(--ring)];
+  }
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)];
+  }
+}
