@@ -2,11 +2,12 @@ import { FreshContext } from "$fresh/server.ts";
 import { getCookies } from "$std/http/cookie.ts";
 import { verifyToken } from "../../../lib/jwt.ts";
 import config from "@/lib/config.ts";
+import { GoogleGenAI } from "@google/genai";
 
 // Google AI Studio API configuration
 const AI_API_KEY = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY") || "";
-const AI_MODEL = "gemini-1.5-flash"; // Use stable Gemini 1.5 Flash
-const AI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${AI_MODEL}:generateContent`;
+const AI_MODEL = "gemma-3-27b-it";
+const ai = new GoogleGenAI({ apiKey: AI_API_KEY });
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -58,43 +59,15 @@ Câu hỏi: ${question}
 
 Trả lời:`;
 
-      // Call Google AI Studio API
-      const response = await fetch(`${AI_API_URL}?key=${AI_API_KEY}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": AI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: fullPrompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          }
-        }),
+      // Call Google AI Studio using the new pattern
+      const response = await ai.models.generateContent({
+        model: AI_MODEL,
+        contents: fullPrompt,
       });
 
-      if (!response.ok) {
-        console.error("AI API error:", response.status, response.statusText);
-        return new Response(
-          JSON.stringify({ error: "AI service temporarily unavailable" }),
-          {
-            status: 503,
-          },
-        );
-      }
-
-      const result = await response.json();
+      const answer = response.text;
       
-      if (result.candidates && result.candidates.length > 0) {
-        const answer = result.candidates[0].content.parts[0].text;
-        
+      if (answer) {
         return new Response(
           JSON.stringify({ 
             answer: answer.trim(),

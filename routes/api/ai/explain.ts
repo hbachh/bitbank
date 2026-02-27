@@ -1,5 +1,6 @@
 import { FreshContext } from "$fresh/server.ts";
 import config from "@/lib/config.ts";
+import { GoogleGenAI } from "@google/genai";
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -33,27 +34,15 @@ export const handler = {
         Giải thích dễ hiểu cho học sinh THPT.
       `;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey,
-          },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        },
-      );
+      const ai = new GoogleGenAI({ apiKey });
+      const AI_MODEL = "gemma-3-27b-it";
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Gemini API Error:", errorData);
-        throw new Error("Failed to fetch from Gemini API");
-      }
+      const response = await ai.models.generateContent({
+        model: AI_MODEL,
+        contents: prompt,
+      });
 
-      const data = (await response.json()) as any;
-      const explanation = data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Không thể tạo giải thích.";
+      const explanation = response.text || "Không thể tạo giải thích.";
 
       return new Response(JSON.stringify({ explanation }), {
         status: 200,
