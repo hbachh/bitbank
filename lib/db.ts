@@ -16,7 +16,7 @@ function logError(message: string, error: unknown) {
 const getUri = () => {
   const uri = config.get("TIDB_DATABASE_URL") ||
     config.get("TIDB_URI") ||
-    "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/aiyoungguru";
+    "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com/aiyoungguru";
   return uri;
 };
 
@@ -35,11 +35,11 @@ const createDbConnection = async (retries = 3) => {
       const client = connect({ url: currentUri });
       const db = drizzle(client, { schema });
 
-      // Test connection and set names with a timeout
+      // Test connection and set names with a longer timeout (30s) for serverless wakeup
       console.log("Testing connection with 'SET NAMES utf8mb4'...");
       const testPromise = db.execute(sql.raw("SET NAMES utf8mb4"));
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Database connection test timed out after 10s")), 10000)
+        setTimeout(() => reject(new Error("Database connection test timed out after 30s")), 30000)
       );
       
       await Promise.race([testPromise, timeoutPromise]);
