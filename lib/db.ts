@@ -1,5 +1,5 @@
 import { drizzle } from "npm:drizzle-orm@0.35.3/tidb-serverless";
-import { connect } from "npm:@tidbcloud/serverless@0.1.6";
+import { connect } from "npm:@tidbcloud/serverless@0.1.0";
 import * as schema from "../db/schema.ts";
 
 function logError(message: string, error: unknown) {
