@@ -31,19 +31,17 @@ const createDbConnection = async (retries = 3) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Connecting to TiDB Serverless (Attempt ${attempt}/${retries})...`);
-      console.log(`Using URI: ${currentUri.replace(/:([^:@]+)@/, ":****@")}`); // Log URI with hidden password
+      // Mask password for logging
+      const maskedUri = currentUri.replace(/:([^:@]+)@/, ":****@");
+      console.log(`Using URI: ${maskedUri}`);
+      
       const client = connect({ url: currentUri });
       const db = drizzle(client, { schema });
 
-      // Test connection and set names with a longer timeout (30s) for serverless wakeup
-      console.log("Testing connection with 'SET NAMES utf8mb4'...");
-      const testPromise = db.execute(sql.raw("SET NAMES utf8mb4"));
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Database connection test timed out after 30s")), 30000)
-      );
-      
-      await Promise.race([testPromise, timeoutPromise]);
-      console.log("Connection test successful.");
+      // Basic query to verify connection
+      console.log("Verifying connection with simple query...");
+      await db.execute(sql.raw("SELECT 1"));
+      console.log("Database connection verified.");
 
     const tableQueries = [
       `CREATE TABLE IF NOT EXISTS users (
