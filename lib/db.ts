@@ -1,5 +1,6 @@
 import { drizzle } from "npm:drizzle-orm@0.35.3/tidb-serverless";
 import { connect } from "npm:@tidbcloud/serverless@0.1.0";
+import { sql } from "npm:drizzle-orm@0.35.3";
 import * as schema from "../db/schema.ts";
 
 function logError(message: string, error: unknown) {
@@ -132,7 +133,7 @@ const createDbConnection = async () => {
 
     for (const query of tableQueries) {
       try {
-        await client.execute(query);
+        await db.execute(sql.raw(query));
       } catch (e) {
         logError("Error executing initialization query:", e);
       }

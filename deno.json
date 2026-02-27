@@ -30,6 +30,7 @@
     "drizzle-orm/mysql-core": "npm:drizzle-orm@^0.35.3/mysql-core",
     "drizzle-orm/tidb-serverless": "npm:drizzle-orm@0.35.3/tidb-serverless",
     "@tidbcloud/serverless": "npm:@tidbcloud/serverless@^0.1.0",
+    "bcryptjs": "npm:bcryptjs@^2.4.3",
     "mysql2": "npm:mysql2@^3.11.0",
     "mysql2/": "npm:mysql2@^3.11.0/",
     "mysql2/promise": "npm:mysql2@^3.11.0/promise",

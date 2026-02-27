@@ -1,10 +1,11 @@
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import bcrypt from "bcryptjs";
 import { signToken, verifyToken } from "./jwt.ts";
 
 export { signToken, verifyToken };
 
 export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password);
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
 }
 
 export async function verifyPassword(
