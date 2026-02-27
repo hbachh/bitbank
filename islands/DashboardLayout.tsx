@@ -40,7 +40,7 @@ export default function DashboardLayout(
         )}
       />
 
-      <div className="flex-1 md:ml-48 lg:ml-52 flex flex-col min-w-0">
+      <div className="flex-1 md:ml-52 lg:ml-56 flex flex-col min-w-0 md:pl-4 lg:pl-6">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 p-3 md:p-4 lg:p-5 max-w-5xl mx-auto w-full">
           {children}
