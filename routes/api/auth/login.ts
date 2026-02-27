@@ -21,7 +21,9 @@ export const handler = {
         );
       }
 
+      console.log(`Login attempt for email: ${email}`);
       const db = await getDb();
+      console.log("Database connection obtained");
 
       // Check if user exists
       const existing = await db.select().from(users).where(
@@ -30,6 +32,7 @@ export const handler = {
       const user = existing[0];
 
       if (!user) {
+        console.log(`User not found: ${email}`);
         return new Response(
           JSON.stringify({ error: "Tài khoản không tồn tại" }),
           {
@@ -38,8 +41,10 @@ export const handler = {
           },
         );
       }
+      console.log(`User found: ${user.id}, role: ${user.role}`);
 
       const isValid = await verifyPassword(password, user.password);
+      console.log(`Password verification result: ${isValid}`);
       if (!isValid) {
         return new Response(
           JSON.stringify({ error: "Mật khẩu không chính xác" }),
@@ -51,6 +56,7 @@ export const handler = {
       }
 
       // Check if email is verified
+      console.log(`Email verified status: ${user.emailVerified}`);
       if (!user.emailVerified) {
         return new Response(
           JSON.stringify({ 

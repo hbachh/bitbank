@@ -12,10 +12,12 @@ function logError(message: string, error: unknown) {
   }
 }
 
-const TIDB_URI =
-  config.get("TIDB_DATABASE_URL") ||
-  config.get("TIDB_URI") ||
-  "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/aiyoungguru";
+const getUri = () => {
+  const uri = config.get("TIDB_DATABASE_URL") ||
+    config.get("TIDB_URI") ||
+    "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com/aiyoungguru";
+  return uri;
+};
 
 let dbInstance: any = null;
 let clientInstance: any = null;
@@ -23,16 +25,23 @@ let clientInstance: any = null;
 const createDbConnection = async (retries = 3) => {
   if (dbInstance) return dbInstance;
 
+  const currentUri = getUri();
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Connecting to TiDB Serverless (Attempt ${attempt}/${retries})...`);
-      console.log(`Using URI: ${TIDB_URI.replace(/:([^:@]+)@/, ":****@")}`); // Log URI with hidden password
-      const client = connect({ url: TIDB_URI });
+      console.log(`Using URI: ${currentUri.replace(/:([^:@]+)@/, ":****@")}`); // Log URI with hidden password
+      const client = connect({ url: currentUri });
       const db = drizzle(client, { schema });
 
-      // Test connection and set names
+      // Test connection and set names with a timeout
       console.log("Testing connection with 'SET NAMES utf8mb4'...");
-      await client.execute("SET NAMES utf8mb4");
+      const testPromise = client.execute("SET NAMES utf8mb4");
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Database connection test timed out after 10s")), 10000)
+      );
+      
+      await Promise.race([testPromise, timeoutPromise]);
       console.log("Connection test successful.");
 
     const tableQueries = [
