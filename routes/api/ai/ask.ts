@@ -5,8 +5,8 @@ import config from "@/lib/config.ts";
 
 // Google AI Studio API configuration
 const AI_API_KEY = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY") || "";
-const AI_MODEL = "gemini-1.5-flash"; // Use Gemini 1.5 Flash for better reliability and performance
-const AI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`;
+const AI_MODEL = "gemini-1.5-flash"; // Use stable Gemini 1.5 Flash
+const AI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${AI_MODEL}:generateContent`;
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -63,6 +63,7 @@ Trả lời:`;
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": AI_API_KEY,
         },
         body: JSON.stringify({
           contents: [{
