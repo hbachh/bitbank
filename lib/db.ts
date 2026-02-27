@@ -12,8 +12,8 @@ function logError(message: string, error: unknown) {
 }
 
 const TIDB_URI =
-  (globalThis as any).Deno?.env.get("TIDB_DATABASE_URL") ||
-  (globalThis as any).Deno?.env.get("TIDB_URI") ||
+  Deno.env.get("TIDB_DATABASE_URL") ||
+  Deno.env.get("TIDB_URI") ||
   "mysql://3xkd3cUNwNkePGY.root:gGDeJVu3bs5NWfq0@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/aiyoungguru";
 
 let dbInstance: any = null;

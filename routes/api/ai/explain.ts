@@ -10,10 +10,10 @@ export const handler = {
         correctAnswer: string;
       };
 
-      const apiKey = Deno.env.get("GEMINI_API_KEY");
+      const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMMA_API_KEY");
 
       if (!apiKey) {
-        console.warn("GEMINI_API_KEY is not set. Using mock response.");
+        console.warn("AI API key (GEMINI_API_KEY or GEMMA_API_KEY) is not set. Using mock response.");
         return new Response(
           JSON.stringify({
             explanation:

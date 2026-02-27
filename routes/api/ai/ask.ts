@@ -3,8 +3,9 @@ import { getCookies } from "$std/http/cookie.ts";
 import { verifyToken } from "../../../lib/jwt.ts";
 
 // Google AI Studio API configuration
-const GEMMA_API_KEY = Deno.env.get("GEMMA_API_KEY") || "";
-const GEMMA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent";
+const AI_API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMMA_API_KEY") || "";
+const AI_MODEL = "gemini-1.5-flash"; // Use Gemini 1.5 Flash for better reliability and performance
+const AI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`;
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -27,7 +28,9 @@ export const handler = {
       }
 
       const body = await req.json();
-      const { question, userGrade, userRole } = body;
+      const { question, grade, role } = body;
+      const userGrade = grade;
+      const userRole = role;
 
       if (!question || !question.trim()) {
         return new Response(JSON.stringify({ error: "Question is required" }), {
@@ -55,7 +58,7 @@ Câu hỏi: ${question}
 Trả lời:`;
 
       // Call Google AI Studio API
-      const response = await fetch(`${GEMMA_API_URL}?key=${GEMMA_API_KEY}`, {
+      const response = await fetch(`${AI_API_URL}?key=${AI_API_KEY}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +79,7 @@ Trả lời:`;
       });
 
       if (!response.ok) {
-        console.error("Gemma API error:", response.status, response.statusText);
+        console.error("AI API error:", response.status, response.statusText);
         return new Response(
           JSON.stringify({ error: "AI service temporarily unavailable" }),
           {
@@ -93,7 +96,7 @@ Trả lời:`;
         return new Response(
           JSON.stringify({ 
             answer: answer.trim(),
-            model: "gemma-3-27b-it"
+            model: AI_MODEL
           }),
           {
             status: 200,
