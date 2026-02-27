@@ -175,7 +175,7 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
             variant="outline"
             size="xs"
             className="w-full text-[9px] md:text-[10px] p-0"
-            onClick={() => window.location.href = "/profile"}
+            onClick={() => window.location.href = `${basePath}/profile`}
           >
             <User className="mr-1 size-2.5 md:size-3" />
             HỒ SƠ

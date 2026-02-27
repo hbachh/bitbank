@@ -16,6 +16,17 @@ export default function ChangePasswordPage({ state }: PageProps) {
     );
   }
 
+  const getRolePath = (role: string | undefined) => {
+    switch (role) {
+      case "admin": return "/admin";
+      case "teacher": return "/teacher";
+      case "student": return "/student";
+      default: return "/student";
+    }
+  };
+
+  const profilePath = `${getRolePath(user?.role)}/profile`;
+
   return (
     <div className="space-y-4 md:space-y-6 max-w-2xl mx-auto">
       <div className="flex justify-between items-center">
@@ -41,7 +52,7 @@ export default function ChangePasswordPage({ state }: PageProps) {
           </div>
 
           <PasswordChangeForm onSuccess={() => {
-            window.location.href = "/profile";
+            window.location.href = profilePath;
           }} />
         </div>
       </Card>
@@ -50,7 +61,7 @@ export default function ChangePasswordPage({ state }: PageProps) {
         <Button
           variant="outline"
           className="h-12 px-6 border-4 border-black font-black uppercase italic hover:bg-black hover:text-white transition-colors"
-          onClick={() => window.location.href = "/profile"}
+          onClick={() => window.location.href = profilePath}
         >
           Quay lại hồ sơ
         </Button>
