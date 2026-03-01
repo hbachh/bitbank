@@ -28,6 +28,7 @@ export const handler = {
 
       const db = await getDb();
       let assignmentType = "exam";
+      let allQuestionIds: string[] = [];
 
       // Check attempt limit and type if it's an assignment
       if (assignmentId && user) {
@@ -37,6 +38,16 @@ export const handler = {
         if (assignmentData.length > 0) {
           const asn = assignmentData[0];
           assignmentType = asn.type || "exam";
+          
+          // Get all question IDs from assignment config
+          if (asn.questionIds) {
+            try {
+              allQuestionIds = JSON.parse(asn.questionIds);
+            } catch (e) {
+              console.error("Error parsing assignment questionIds:", e);
+            }
+          }
+
           const submissionCount = await db.select({ value: count() }).from(
             submissions,
           ).where(
@@ -55,7 +66,12 @@ export const handler = {
         }
       }
 
-      if (!answers || Object.keys(answers).length === 0) {
+      // If no assignment ID or no question IDs in assignment, use IDs from provided answers
+      if (allQuestionIds.length === 0) {
+        allQuestionIds = Object.keys(answers || {});
+      }
+
+      if (allQuestionIds.length === 0) {
         return new Response(
           JSON.stringify({ score: 0, results: [], total: 0 }),
           {
@@ -65,23 +81,41 @@ export const handler = {
         );
       }
 
-      const ids = Object.keys(answers);
-
-      // Fetch questions to check answers
-      const questionList = await db.select().from(questions).where(
-        inArray(questions.id, ids),
+      // Fetch ALL questions to check answers
+      const unsortedQuestionList = await db.select().from(questions).where(
+        inArray(questions.id, allQuestionIds),
       );
+
+      // Sort questions based on the order in allQuestionIds
+      const questionList = allQuestionIds.map(id => 
+        unsortedQuestionList.find(q => q.id === id)
+      ).filter(Boolean) as any[];
 
       let score = 0;
       let hasPendingSA = false;
 
       const results = await Promise.all(questionList.map(async (q) => {
-        const userAnswer = answers[q.id];
+        const userAnswer = answers?.[q.id];
         let isCorrect = false;
         let pendingGrading = false;
         let explanation = "Sử dụng AI để giải thích chi tiết câu này.";
 
-        if (q.type === "TN") {
+        // Handle case where student didn't answer
+        if (userAnswer === undefined || userAnswer === null || userAnswer === "") {
+          if (assignmentType === "practice" && q.type === "SA" && AI_API_KEY) {
+            explanation = "Bạn chưa nhập câu trả lời cho câu hỏi này.";
+            isCorrect = false;
+            pendingGrading = false;
+          } else if (q.type === "SA" && assignmentType !== "practice") {
+            hasPendingSA = true;
+            pendingGrading = true;
+            isCorrect = false;
+          } else {
+            isCorrect = false;
+            pendingGrading = false;
+            explanation = "Câu hỏi chưa được trả lời.";
+          }
+        } else if (q.type === "TN") {
           isCorrect = userAnswer === q.answer;
           if (isCorrect) score += 1;
         } else if (q.type === "TF") {
@@ -149,8 +183,10 @@ export const handler = {
               pendingGrading = false;
             } catch (err) {
               console.error("AI Grading error:", err);
-              hasPendingSA = true;
-              pendingGrading = true;
+              // In practice mode, don't leave it pending. Mark it wrong but with an error message.
+              isCorrect = false;
+              pendingGrading = false;
+              explanation = "Lỗi khi gọi AI chấm điểm. Vui lòng thử lại sau.";
             }
           } else {
             // Textual SA - let teacher grade
