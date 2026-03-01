@@ -17,6 +17,7 @@ interface Question {
   content: string;
   type: string;
   data: string;
+  answer: string;
 }
 
 interface ExamResult {
@@ -55,10 +56,57 @@ export default function ExamExercise(
   }: ExamExerciseProps,
 ) {
   const [loading, setLoading] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>(
-    initialQuestions || [],
-  );
+  const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
+
+  // Helper to shuffle array
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  // Effect to process initial questions (shuffle them and their options)
+  useEffect(() => {
+    if (initialQuestions && initialQuestions.length > 0) {
+      const processed = initialQuestions.map(q => {
+        if (q.type === "TN") {
+          try {
+            const parsed = JSON.parse(q.data || "{}");
+            const options = parsed.options || [];
+            // We need to keep track of the correct answer letter (A, B, C, D)
+            const correctLetter = q.answer || "A";
+            const correctIdx = correctLetter.charCodeAt(0) - 65;
+            
+            // Create options with original index to track correctness after shuffle
+            const optionsWithMeta = options.map((text: string, idx: number) => ({
+              text,
+              isCorrect: idx === correctIdx
+            }));
+
+            const shuffledMeta = shuffleArray(optionsWithMeta);
+            const newCorrectIdx = shuffledMeta.findIndex(m => m.isCorrect);
+            const newCorrectLetter = String.fromCharCode(65 + newCorrectIdx);
+
+            return {
+              ...q,
+              data: JSON.stringify({ ...parsed, options: shuffledMeta.map(m => m.text) }),
+              answer: newCorrectLetter // Update the expected answer for this shuffled instance
+            };
+          } catch (e) {
+            return q;
+          }
+        }
+        return q;
+      });
+      
+      const shuffled = isReview ? processed : shuffleArray(processed);
+      setShuffledQuestions(shuffled);
+    }
+  }, [initialQuestions, isReview]);
 
   // Reconstruct answers from reviewResult if available
   const initialAnswers: Record<string, any> = {};
@@ -79,7 +127,7 @@ export default function ExamExercise(
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (questions.length > 0 && !submitted && !isReview) {
+    if (shuffledQuestions.length > 0 && !submitted && !isReview) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -94,7 +142,7 @@ export default function ExamExercise(
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [questions.length, submitted, isReview]);
+  }, [shuffledQuestions.length, submitted, isReview]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -117,7 +165,31 @@ export default function ExamExercise(
         error?: string;
       };
       if (data.success) {
-        setQuestions(data.data);
+        // Shuffling logic for generated exam
+        const processed = data.data.map(q => {
+          if (q.type === "TN") {
+            try {
+              const parsed = JSON.parse(q.data || "{}");
+              const options = parsed.options || [];
+              const correctLetter = q.answer || "A";
+              const correctIdx = correctLetter.charCodeAt(0) - 65;
+              const optionsWithMeta = options.map((text: string, idx: number) => ({
+                text,
+                isCorrect: idx === correctIdx
+              }));
+              const shuffledMeta = shuffleArray(optionsWithMeta);
+              const newCorrectIdx = shuffledMeta.findIndex(m => m.isCorrect);
+              return {
+                ...q,
+                data: JSON.stringify({ ...parsed, options: shuffledMeta.map(m => m.text) }),
+                answer: String.fromCharCode(65 + newCorrectIdx)
+              };
+            } catch (e) { return q; }
+          }
+          return q;
+        });
+        const shuffled = shuffleArray(processed);
+        setShuffledQuestions(shuffled);
       } else {
         alert("Failed to load exam: " + data.error);
       }
@@ -131,11 +203,11 @@ export default function ExamExercise(
 
   const handleSelect = (value: any) => {
     if (isReview) return;
-    setAnswers({ ...answers, [questions[currentQ].id]: value });
+    setAnswers({ ...answers, [shuffledQuestions[currentQ].id]: value });
   };
 
   const next = () => {
-    if (currentQ < questions.length - 1) setCurrentQ(currentQ + 1);
+    if (currentQ < shuffledQuestions.length - 1) setCurrentQ(currentQ + 1);
   };
 
   const prev = () => {
@@ -149,10 +221,16 @@ export default function ExamExercise(
     if (timerRef.current) clearInterval(timerRef.current);
 
     try {
+      // Use the updated answer mapping from processed questions
+      const finalAnswers: Record<string, any> = {};
+      shuffledQuestions.forEach(q => {
+        finalAnswers[q.id] = answers[q.id];
+      });
+
       const res = await fetch("/api/exam/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, assignmentId }),
+        body: JSON.stringify({ answers: finalAnswers, assignmentId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -186,19 +264,25 @@ export default function ExamExercise(
         const parsed = JSON.parse(q.data || "{}");
         const subQuestions = parsed.subQuestions || [];
         
-        // If value is a string (correctAnswer from API might be comma-separated or similar)
+        // If value is a string (comma-separated answers like "true,false,true,false")
         if (typeof value === "string") {
           const vals = value.split(",");
           return subQuestions.map((sq: any, i: number) => {
-            const val = vals[i] === "true" || vals[i] === "Đúng" || vals[i] === "true";
-            return `${i + 1}. ${val ? "Đúng" : "Sai"}`;
+            const val = vals[i] === "true" || vals[i] === "Đúng";
+            return `${i + 1}. ${sq.text}: ${val ? "Đúng" : "Sai"}`;
           }).join(" | ");
         }
 
-        // If value is an object (user selection)
-        return Object.entries(value).map(([idx, val]) => {
-          return `${parseInt(idx) + 1}. ${val ? "Đúng" : "Sai"}`;
-        }).join(" | ");
+        // If value is an object (user selection mapping index to boolean)
+        if (typeof value === "object") {
+          return subQuestions.map((sq: any, i: number) => {
+            const val = value[i];
+            const valStr = val === true ? "Đúng" : val === false ? "Sai" : "Chưa trả lời";
+            return `${i + 1}. ${sq.text}: ${valStr}`;
+          }).join(" | ");
+        }
+        
+        return String(value);
       } catch {
         return String(value);
       }
@@ -206,12 +290,12 @@ export default function ExamExercise(
     return value;
   };
 
-  if (loading && !questions.length) {
+  if (loading && !shuffledQuestions.length) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-16 w-16 animate-spin mx-auto text-primary" />
-          <p className="font-black uppercase italic animate-pulse text-xl">
+          <p className="font-black italic animate-pulse text-xl">
             Đang tải dữ liệu bài thi...
           </p>
         </div>
@@ -219,25 +303,25 @@ export default function ExamExercise(
     );
   }
 
-  if (!questions || questions.length === 0) {
+  if (!shuffledQuestions || shuffledQuestions.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-12">
         <Card className="border-4 border-black shadow-neo bg-white p-8 text-center space-y-6">
           <div className="bg-primary p-4 border-2 border-black inline-block shadow-neo-sm">
             <HelpCircle className="h-12 w-12" />
           </div>
-          <h1 className="text-3xl font-black uppercase italic tracking-tighter leading-none">
-            SẴN SÀNG CHINH PHỤC BÀI THI?
+          <h1 className="text-3xl font-black italic tracking-tighter leading-none">
+            Sẵn sàng chinh phục bài thi?
           </h1>
-          <p className="text-lg font-bold uppercase tracking-tight opacity-70 leading-relaxed">
+          <p className="text-lg font-bold tracking-tight opacity-70 leading-relaxed">
             Hệ thống sẽ tạo 5 câu hỏi ngẫu nhiên từ ngân hàng đề thi dựa trên
             trình độ của bạn.
           </p>
           <Button
             onClick={startExam}
-            className="w-full h-14 text-xl font-black uppercase italic border-4 border-black shadow-neo hover:shadow-none translate-x-[-2px] translate-y-[-2px] active:translate-x-0 active:translate-y-0 transition-all"
+            className="w-full h-14 text-xl font-black italic border-4 border-black shadow-neo hover:shadow-none translate-x-[-2px] translate-y-[-2px] active:translate-x-0 active:translate-y-0 transition-all"
           >
-            BẮT ĐẦU NGAY
+            Bắt đầu ngay
           </Button>
         </Card>
       </div>
@@ -257,23 +341,23 @@ export default function ExamExercise(
                 <Trophy className="h-8 w-8" />
               </div>
               <div>
-                <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
+                <h2 className="text-4xl font-black italic tracking-tighter leading-none">
                   {scoreDisplay}
                 </h2>
-                <p className="text-sm font-black uppercase italic text-primary mt-1">
-                  KẾT QUẢ BÀI LÀM
+                <p className="text-sm font-black italic text-primary mt-1">
+                  Kết quả bài làm
                 </p>
               </div>
             </div>
             {examResult.hasSA && (
-              <p className="text-[10px] font-bold uppercase italic bg-yellow-400 text-black p-1.5 border-2 border-white">
+              <p className="text-[10px] font-bold italic bg-yellow-400 text-black p-1.5 border-2 border-white">
                 {examResult.message}
               </p>
             )}
           </Card>
 
           <div className="space-y-4">
-            {questions.map((q, idx) => {
+            {shuffledQuestions.map((q, idx) => {
               const res = examResult.results.find((r) => r.questionId === q.id);
               const isCorrect = res?.isCorrect;
               const isPending = res?.pendingGrading;
@@ -296,47 +380,53 @@ export default function ExamExercise(
                         <span className="h-6 w-6 shrink-0 rounded-full border-2 border-black bg-white flex items-center justify-center font-black text-xs">
                           {idx + 1}
                         </span>
-                        <p className="font-black uppercase italic text-sm leading-tight pt-0.5">
+                        <p className="font-black italic text-sm leading-tight pt-0.5">
                           {q.content}
                         </p>
                       </div>
                       {isPending
                         ? (
-                          <span className="bg-yellow-400 border border-black px-1.5 py-0.5 text-[8px] font-black uppercase italic whitespace-nowrap">
-                            ĐANG CHỜ CHẤM
+                          <span className="bg-yellow-400 border border-black px-1.5 py-0.5 text-[8px] font-black italic whitespace-nowrap">
+                            Đang chờ chấm
                           </span>
                         )
                         : isCorrect
                         ? (
-                          <span className="bg-primary border border-black px-1.5 py-0.5 text-[8px] font-black uppercase italic whitespace-nowrap">
-                            CHÍNH XÁC
+                          <span className="bg-primary border border-black px-1.5 py-0.5 text-[8px] font-black italic whitespace-nowrap">
+                            Chính xác
                           </span>
                         )
                         : (
-                          <span className="bg-red-500 text-white border border-black px-1.5 py-0.5 text-[8px] font-black uppercase italic whitespace-nowrap">
-                            CHƯA ĐÚNG
+                          <span className="bg-red-500 text-white border border-black px-1.5 py-0.5 text-[8px] font-black italic whitespace-nowrap">
+                            Chưa đúng
                           </span>
                         )}
                     </div>
 
                     <div className="pl-8 space-y-2">
                       <div className="p-2 border-2 border-black bg-white/50 text-xs">
-                        <p className="text-[8px] font-black opacity-50 uppercase mb-1 tracking-wider">
+                        <p className="text-[8px] font-black opacity-50 mb-1 tracking-wider">
                           Câu trả lời của bạn:
                         </p>
-                        <p className="font-bold uppercase italic">
+                        <p className="font-bold italic">
                           {getOptionText(q, res?.userAnswer)}
                         </p>
                       </div>
 
                       {!isPending && (
                         <div className="p-2 border-2 border-black bg-white text-xs">
-                          <p className="text-[8px] font-black opacity-50 uppercase mb-1 tracking-wider">
+                          <p className="text-[8px] font-black opacity-50 mb-1 tracking-wider">
                             Đáp án đúng:
                           </p>
-                          <p className="font-bold uppercase italic">
-                            {getOptionText(q, res?.correctAnswer)}
+                          <p className="font-bold italic text-green-700">
+                            {getOptionText(q, res?.correctAnswer || (q.type === "TF" ? JSON.parse(q.data).subQuestions.map((sq: any) => sq.answer).join(",") : q.answer))}
                           </p>
+                        </div>
+                      )}
+                      
+                      {res?.explanation && (
+                        <div className="p-2 border-2 border-black bg-accent/10 text-[10px] font-bold italic">
+                          💡 Giải thích: {res.explanation}
                         </div>
                       )}
                     </div>
@@ -350,11 +440,11 @@ export default function ExamExercise(
         {/* Review Sidebar */}
         <div className="lg:col-span-4 space-y-4 sticky top-4 h-fit">
           <Card className="border-4 border-black shadow-neo bg-white p-4">
-            <h3 className="font-black uppercase italic text-sm mb-4 border-b-2 border-black pb-2">
+            <h3 className="font-black italic text-sm mb-4 border-b-2 border-black pb-2">
               Danh sách câu hỏi
             </h3>
             <div className="grid grid-cols-5 gap-2">
-              {questions.map((q, idx) => {
+              {shuffledQuestions.map((q, idx) => {
                 const res = examResult.results.find((r) =>
                   r.questionId === q.id
                 );
@@ -382,9 +472,9 @@ export default function ExamExercise(
             <div className="mt-6 space-y-2">
               <Button
                 onClick={() => window.location.href = "/student/exam"}
-                className="w-full h-10 text-xs font-black uppercase italic border-2 border-black bg-secondary shadow-neo-sm hover:shadow-none"
+                className="w-full h-10 text-xs font-black italic border-2 border-black bg-secondary shadow-neo-sm hover:shadow-none"
               >
-                QUAY LẠI DANH SÁCH
+                Quay lại danh sách
               </Button>
             </div>
           </Card>
@@ -394,7 +484,7 @@ export default function ExamExercise(
     );
   }
 
-  const q = questions[currentQ];
+  const q = shuffledQuestions[currentQ];
   let options: any[] = [];
   try {
     const parsed = JSON.parse(q.data || "[]");
@@ -412,10 +502,10 @@ export default function ExamExercise(
       {/* Main Exam Area */}
       <div className="lg:col-span-8 space-y-4">
         <div className="flex justify-between items-center bg-white border-4 border-black p-3 shadow-neo-sm">
-          <h2 className="text-xl font-black uppercase italic tracking-tighter">
-            CÂU {currentQ + 1} / {questions.length}
+          <h2 className="text-xl font-black italic tracking-tighter">
+            Câu {currentQ + 1} / {shuffledQuestions.length}
           </h2>
-          <div className="flex items-center gap-2 font-black uppercase italic text-red-600 bg-red-50 px-3 py-1 border-2 border-black">
+          <div className="flex items-center gap-2 font-black italic text-red-600 bg-red-50 px-3 py-1 border-2 border-black">
             <Clock className="h-4 w-4" />
             <span>{formatTime(timeLeft)}</span>
           </div>
@@ -423,14 +513,14 @@ export default function ExamExercise(
 
         <Card className="border-4 border-black shadow-neo bg-white p-6 space-y-6">
           <div className="space-y-3">
-            <div className="bg-accent px-3 py-0.5 border-2 border-black inline-block text-[10px] font-black uppercase italic">
-              LOẠI: {q.type === "TN"
-                ? "TRẮC NGHIỆM"
+            <div className="bg-accent px-3 py-0.5 border-2 border-black inline-block text-[10px] font-black italic">
+              Loại: {q.type === "TN"
+                ? "Trắc nghiệm"
                 : q.type === "TF"
-                ? "ĐÚNG/SAI"
-                : "TRẢ LỜI NGẮN"}
+                ? "Đúng/Sai"
+                : "Trả lời ngắn"}
             </div>
-            <h3 className="text-xl md:text-2xl font-black uppercase italic leading-tight tracking-tight">
+            <h3 className="text-xl md:text-2xl font-black italic leading-tight tracking-tight">
               {q.content}
             </h3>
           </div>
@@ -441,7 +531,7 @@ export default function ExamExercise(
               return (                <div
                   key={idx}
                   className={cn(
-                    "p-4 border-2 border-black font-black uppercase italic text-sm transition-all shadow-neo-sm cursor-pointer flex items-center gap-4",
+                    "p-4 border-2 border-black font-black italic text-sm transition-all shadow-neo-sm cursor-pointer flex items-center gap-4",
                     answers[q.id] === char
                       ? "bg-primary translate-x-0.5 translate-y-0.5 shadow-none"
                       : "bg-white hover:bg-accent/20 hover:translate-x-0.5 hover:translate-y-0.5",
@@ -462,8 +552,8 @@ export default function ExamExercise(
                   key={idx}
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-2 border-black bg-accent/5 gap-4"
                 >
-                  <span className="font-black uppercase italic text-sm">
-                    {opt.text}
+                  <span className="font-black italic text-sm">
+                    {idx + 1}. {opt.text}
                   </span>
                   <div className="flex gap-2 shrink-0">
                     <Button
@@ -471,7 +561,7 @@ export default function ExamExercise(
                         ? "default"
                         : "outline"}
                       className={cn(
-                        "w-20 h-9 border-2 border-black font-black uppercase italic text-[10px]",
+                        "w-20 h-9 border-2 border-black font-black italic text-[10px]",
                         answers[q.id]?.[idx] === true && "bg-green-500",
                       )}
                       onClick={() => {
@@ -480,14 +570,14 @@ export default function ExamExercise(
                         handleSelect({ ...current, [idx]: true });
                       }}
                     >
-                      ĐÚNG
+                      Đúng
                     </Button>
                     <Button
                       variant={answers[q.id]?.[idx] === false
                         ? "default"
                         : "outline"}
                       className={cn(
-                        "w-20 h-9 border-2 border-black font-black uppercase italic text-[10px]",
+                        "w-20 h-9 border-2 border-black font-black italic text-[10px]",
                         answers[q.id]?.[idx] === false && "bg-red-500 text-white",
                       )}
                       onClick={() => {
@@ -496,7 +586,7 @@ export default function ExamExercise(
                         handleSelect({ ...current, [idx]: false });
                       }}
                     >
-                      SAI
+                      Sai
                     </Button>
                   </div>
                 </div>
@@ -504,8 +594,8 @@ export default function ExamExercise(
 
             {q.type === "SA" && (
               <textarea
-                className="w-full p-4 border-2 border-black font-black uppercase italic text-sm bg-accent/5 focus:outline-none placeholder:opacity-30 min-h-[120px]"
-                placeholder="NHẬP CÂU TRẢ LỜI CỦA BẠN TẠI ĐÂY..."
+                className="w-full p-4 border-2 border-black font-black italic text-sm bg-accent/5 focus:outline-none placeholder:opacity-30 min-h-[120px]"
+                placeholder="Nhập câu trả lời của bạn tại đây..."
                 value={answers[q.id] || ""}
                 readOnly={isReview}
                 onInput={(e) =>
@@ -513,108 +603,79 @@ export default function ExamExercise(
               />
             )}
           </div>
-
-          <div className="flex justify-between gap-3 pt-6 border-t-2 border-black border-dashed mt-4">
-            <Button
-              onClick={prev}
-              disabled={currentQ === 0}
-              className="flex-1 h-10 border-2 border-black font-black uppercase italic bg-white shadow-neo-sm disabled:opacity-30 text-xs"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" /> CÂU TRƯỚC
-            </Button>
-
-            {currentQ === questions.length - 1
-              ? (
-                !isReview && (
-                  <Button
-                    onClick={submitExam}
-                    disabled={loading}
-                    className="flex-[2] h-10 border-2 border-black font-black uppercase italic bg-primary shadow-neo-sm hover:shadow-none transition-all text-xs"
-                  >
-                    {loading ? "ĐANG NỘP..." : "NỘP BÀI NGAY"}
-                    <CheckCircle className="h-4 w-4 ml-2" />
-                  </Button>
-                )
-              )
-              : (
-                <Button
-                  onClick={next}
-                  className="flex-[2] h-10 border-2 border-black font-black uppercase italic bg-black text-white shadow-neo-sm hover:shadow-none transition-all text-xs"
-                >
-                  TIẾP THEO <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              )}
-          </div>
         </Card>
-      </div>
 
-      {/* Right Navigation Sidebar */}
-      <div className="lg:col-span-4 space-y-4 sticky top-4 h-fit">
-        <Card className="border-4 border-black shadow-neo bg-white p-4">
-          <div className="flex items-center justify-between mb-4 border-b-2 border-black pb-2">
-            <h3 className="font-black uppercase italic text-sm">Điều hướng</h3>
-            <span className="text-[10px] font-black opacity-50 uppercase">
-              {Object.keys(answers).length} / {questions.length} ĐÃ XONG
-            </span>
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {questions.map((q, idx) => {
-              const qId = q.id;
-              const isAnswered = answers[qId] !== undefined &&
-                answers[qId] !== "";
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentQ(idx)}
-                  className={cn(
-                    "h-10 w-full border-2 border-black font-black text-xs flex flex-col items-center justify-center transition-all shadow-neo-sm hover:shadow-none",
-                    currentQ === idx
-                      ? "bg-black text-white -translate-y-0.5"
-                      : isAnswered
-                      ? "bg-primary"
-                      : "bg-white",
-                  )}
-                >
-                  <span className="text-[10px]">{idx + 1}</span>
-                  {isAnswered && (
-                    <span className="text-[8px] leading-none opacity-80 truncate w-full px-1 text-center">
-                      {q.type === "TN"
-                        ? answers[qId]
-                        : q.type === "TF"
-                        ? "V"
-                        : "..."}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-6 p-3 bg-accent/10 border-2 border-black space-y-2">
-            <p className="text-[9px] font-black uppercase italic tracking-wider opacity-60">
-              Trạng thái bài làm
-            </p>
-            <div className="flex items-center gap-4 text-[9px] font-black uppercase italic">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 bg-primary border border-black" />
-                <span>Đã làm</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 bg-white border border-black" />
-                <span>Chưa làm</span>
-              </div>
-            </div>
-          </div>
-          {!isReview && (
-            <div className="mt-4">
+        {/* Action Buttons */}
+        <div className="flex justify-between gap-4">
+          <Button
+            onClick={prev}
+            disabled={currentQ === 0}
+            variant="outline"
+            className="h-12 px-6 border-4 border-black font-black italic shadow-neo-sm hover:shadow-none disabled:opacity-30"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" /> Câu trước
+          </Button>
+
+          {currentQ === shuffledQuestions.length - 1
+            ? (
               <Button
                 onClick={submitExam}
-                disabled={loading || Object.keys(answers).length === 0}
-                className="w-full h-10 border-2 border-black font-black uppercase italic bg-primary shadow-neo-sm text-xs"
+                disabled={loading}
+                className="h-12 px-8 border-4 border-black bg-primary font-black italic shadow-neo hover:shadow-none translate-x-[-2px] translate-y-[-2px] active:translate-x-0 active:translate-y-0 transition-all"
               >
-                NỘP BÀI TẬP
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                  <>
+                    Nộp bài <CheckCircle className="ml-2 h-5 w-5" />
+                  </>
+                )}
               </Button>
+            )
+            : (
+              <Button
+                onClick={next}
+                className="h-12 px-8 border-4 border-black bg-black text-white font-black italic shadow-neo hover:shadow-none translate-x-[-2px] translate-y-[-2px] active:translate-x-0 active:translate-y-0 transition-all"
+              >
+                Câu tiếp <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            )}
+        </div>
+      </div>
+
+      {/* Navigation Sidebar */}
+      <div className="lg:col-span-4 space-y-4">
+        <Card className="border-4 border-black shadow-neo bg-white p-4">
+          <h3 className="font-black italic text-sm mb-4 border-b-2 border-black pb-2">
+            Bản đồ câu hỏi
+          </h3>
+          <div className="grid grid-cols-5 gap-2">
+            {shuffledQuestions.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentQ(idx)}
+                className={cn(
+                  "h-10 border-2 border-black font-black text-sm flex items-center justify-center transition-all",
+                  currentQ === idx
+                    ? "bg-black text-white shadow-none"
+                    : answers[shuffledQuestions[idx].id]
+                    ? "bg-primary shadow-neo-sm hover:shadow-none"
+                    : "bg-white shadow-neo-sm hover:shadow-none",
+                )}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-8 pt-4 border-t-2 border-black space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 border-2 border-black bg-primary"></div>
+              <span className="text-[10px] font-black italic">Đã trả lời</span>
             </div>
-          )}
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 border-2 border-black bg-white"></div>
+              <span className="text-[10px] font-black italic">Chưa trả lời</span>
+            </div>
+          </div>
         </Card>
       </div>
     </div>

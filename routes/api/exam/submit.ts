@@ -9,7 +9,7 @@ import config from "@/lib/config.ts";
 import { GoogleGenAI } from "@google/genai";
 
 // Google AI Studio API configuration for AI Grading
-const AI_API_KEY = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY") || "";
+const AI_API_KEY = config.get("GEMINI_API_KEY") || "";
 const AI_MODEL = "gemma-3-27b-it";
 const ai = new GoogleGenAI({ apiKey: AI_API_KEY });
 
@@ -91,17 +91,29 @@ export const handler = {
         unsortedQuestionList.find(q => q.id === id)
       ).filter(Boolean) as any[];
 
-      let score = 0;
+      let totalUnits = 0;
+      let correctUnits = 0;
       let hasPendingSA = false;
 
       const results = await Promise.all(questionList.map(async (q) => {
-        const userAnswer = answers?.[q.id];
+        const userAnswerData = answers?.[q.id];
+        const userAnswer = typeof userAnswerData === "object" && userAnswerData !== null && "answer" in userAnswerData ? userAnswerData.answer : userAnswerData;
+        
         let isCorrect = false;
         let pendingGrading = false;
         let explanation = "Sử dụng AI để giải thích chi tiết câu này.";
+        let qTotalUnits = 1;
+        let qCorrectUnits = 0;
 
         // Handle case where student didn't answer
         if (userAnswer === undefined || userAnswer === null || userAnswer === "") {
+          if (q.type === "TF") {
+            try {
+              const parsed = JSON.parse(q.data || "{}");
+              qTotalUnits = (parsed.subQuestions || []).length || 1;
+            } catch (e) {}
+          }
+          
           if (assignmentType === "practice" && q.type === "SA" && AI_API_KEY) {
             explanation = "Bạn chưa nhập câu trả lời cho câu hỏi này.";
             isCorrect = false;
@@ -117,27 +129,24 @@ export const handler = {
           }
         } else if (q.type === "TN") {
           isCorrect = userAnswer === q.answer;
-          if (isCorrect) score += 1;
+          if (isCorrect) qCorrectUnits = 1;
         } else if (q.type === "TF") {
           try {
             const parsed = JSON.parse(q.data || "{}");
             const subQuestions = parsed.subQuestions || [];
-            isCorrect = true;
+            qTotalUnits = subQuestions.length;
             
             // Check each sub-question answer
             for (let i = 0; i < subQuestions.length; i++) {
-              // The database value can be "true"/"false" (string) or true/false (boolean)
               const dbAnswer = subQuestions[i].answer;
               const correctVal = dbAnswer === "true" || dbAnswer === true;
               
-              // The user answer is an object { index: boolean }
-              if (userAnswer?.[i] !== correctVal) {
-                isCorrect = false;
-                break;
+              if (userAnswer?.[i] === correctVal) {
+                qCorrectUnits += 1;
               }
             }
+            isCorrect = qCorrectUnits === qTotalUnits;
             
-            // Generate a more helpful explanation for TF
             explanation = subQuestions.map((sq: any, i: number) => {
               const dbAnswer = sq.answer;
               const correctVal = dbAnswer === "true" || dbAnswer === true;
@@ -148,22 +157,17 @@ export const handler = {
             console.error("TF Grading error for question", q.id, e);
             isCorrect = false;
           }
-          if (isCorrect) score += 1;
         } else if (q.type === "SA") {
           const cleanUser = userAnswer?.trim().toLowerCase().replace(",", ".");
           const cleanCorrect = q.answer?.trim().toLowerCase().replace(",", ".");
 
-          // Check if correct answer is a number
-          const isNumeric = !isNaN(parseFloat(cleanCorrect)) &&
-            isFinite(Number(cleanCorrect));
+          const isNumeric = !isNaN(parseFloat(cleanCorrect)) && isFinite(Number(cleanCorrect));
 
           if (isNumeric) {
-            // Numeric comparison
             isCorrect = parseFloat(cleanUser) === parseFloat(cleanCorrect);
-            if (isCorrect) score += 1;
+            if (isCorrect) qCorrectUnits = 1;
             pendingGrading = false;
           } else if (assignmentType === "practice" && AI_API_KEY) {
-            // AI Grading for practice self-study
             try {
               const prompt = `
                 Bạn là một giám khảo chấm thi Tin học. Hãy chấm điểm câu trả lời của học sinh cho câu hỏi sau:
@@ -189,27 +193,27 @@ export const handler = {
                 const aiResult = JSON.parse(jsonMatch[0]);
                 isCorrect = aiResult.isCorrect;
                 explanation = aiResult.explanation;
-                if (isCorrect) score += 1;
+                if (isCorrect) qCorrectUnits = 1;
               } else {
-                // Fallback if AI fails to return JSON
                 isCorrect = cleanUser === cleanCorrect;
-                if (isCorrect) score += 1;
+                if (isCorrect) qCorrectUnits = 1;
               }
               pendingGrading = false;
             } catch (err) {
-              console.error("AI Grading error:", err);
-              // In practice mode, don't leave it pending. Mark it wrong but with an error message.
               isCorrect = false;
               pendingGrading = false;
               explanation = "Lỗi khi gọi AI chấm điểm. Vui lòng thử lại sau.";
             }
           } else {
-            // Textual SA - let teacher grade
             hasPendingSA = true;
             pendingGrading = true;
-            isCorrect = cleanUser === cleanCorrect; // Initial check
+            isCorrect = cleanUser === cleanCorrect;
+            if (isCorrect) qCorrectUnits = 1;
           }
         }
+
+        totalUnits += qTotalUnits;
+        correctUnits += qCorrectUnits;
 
         return {
           questionId: q.id,
@@ -219,6 +223,8 @@ export const handler = {
           pendingGrading,
           correctAnswer: q.answer,
           explanation: explanation,
+          qCorrectUnits,
+          qTotalUnits,
         };
       }));
 
@@ -229,7 +235,7 @@ export const handler = {
           id: submissionId,
           assignmentId,
           studentId: user.id,
-          score: score,
+          score: correctUnits, // Store unit-based score
           answers: JSON.stringify(results),
           isGraded: !hasPendingSA,
         });
@@ -237,8 +243,8 @@ export const handler = {
 
       return new Response(
         JSON.stringify({
-          score,
-          total: questionList.length,
+          score: correctUnits,
+          total: totalUnits,
           results,
           hasPendingSA,
           message: hasPendingSA
