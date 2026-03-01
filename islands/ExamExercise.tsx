@@ -185,12 +185,22 @@ export default function ExamExercise(
       try {
         const parsed = JSON.parse(q.data || "{}");
         const subQuestions = parsed.subQuestions || [];
+        
+        // If value is a string (correctAnswer from API might be comma-separated or similar)
+        if (typeof value === "string") {
+          const vals = value.split(",");
+          return subQuestions.map((sq: any, i: number) => {
+            const val = vals[i] === "true" || vals[i] === "Đúng" || vals[i] === "true";
+            return `${i + 1}. ${val ? "Đúng" : "Sai"}`;
+          }).join(" | ");
+        }
+
+        // If value is an object (user selection)
         return Object.entries(value).map(([idx, val]) => {
-          const opt = subQuestions[parseInt(idx)];
-          return `${opt?.text || (parseInt(idx) + 1)}: ${val ? "ĐÚNG" : "SAI"}`;
-        }).join(", ");
+          return `${parseInt(idx) + 1}. ${val ? "Đúng" : "Sai"}`;
+        }).join(" | ");
       } catch {
-        return JSON.stringify(value);
+        return String(value);
       }
     }
     return value;

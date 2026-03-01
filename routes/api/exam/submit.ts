@@ -123,14 +123,29 @@ export const handler = {
             const parsed = JSON.parse(q.data || "{}");
             const subQuestions = parsed.subQuestions || [];
             isCorrect = true;
+            
+            // Check each sub-question answer
             for (let i = 0; i < subQuestions.length; i++) {
-              const correctVal = subQuestions[i].answer === "true";
+              // The database value can be "true"/"false" (string) or true/false (boolean)
+              const dbAnswer = subQuestions[i].answer;
+              const correctVal = dbAnswer === "true" || dbAnswer === true;
+              
+              // The user answer is an object { index: boolean }
               if (userAnswer?.[i] !== correctVal) {
                 isCorrect = false;
                 break;
               }
             }
+            
+            // Generate a more helpful explanation for TF
+            explanation = subQuestions.map((sq: any, i: number) => {
+              const dbAnswer = sq.answer;
+              const correctVal = dbAnswer === "true" || dbAnswer === true;
+              return `${i + 1}. ${sq.text}: ${correctVal ? "Đúng" : "Sai"}`;
+            }).join(" | ");
+
           } catch (e) {
+            console.error("TF Grading error for question", q.id, e);
             isCorrect = false;
           }
           if (isCorrect) score += 1;
