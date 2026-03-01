@@ -109,10 +109,10 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
       routes = [
         ...routes,
         {
-          label: "LỚP HỌC",
-          icon: Users,
-          href: "/admin/classes",
-          active: pathname?.startsWith("/admin/classes"),
+          label: "NGÂN HÀNG CÂU HỎI",
+          icon: ClipboardList,
+          href: "/admin/questions",
+          active: pathname?.startsWith("/admin/questions"),
         },
         {
           label: "NGƯỜI DÙNG",
@@ -184,7 +184,7 @@ export function Sidebar({ className, user, pathname }: SidebarProps) {
             variant="destructive"
             size="xs"
             className="w-full text-[9px] md:text-[10px] p-0 shadow-neo-sm"
-            onClick={() => window.location.href = "/logout"}
+            onClick={() => window.location.href = "/api/auth/logout"}
           >
             <LogOut className="mr-1 size-2.5 md:size-3" />
             THOÁT

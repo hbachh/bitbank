@@ -120,6 +120,25 @@ export default function LoginForm() {
               Đăng ký ngay
             </a>
           </div>
+
+          {/* Demo Accounts Info */}
+          <div className="mt-4 p-3 border-2 border-black bg-accent/5 rounded-none text-left space-y-2">
+            <p className="text-[10px] font-black uppercase italic border-b border-black pb-1 mb-1">Tài khoản dùng thử:</p>
+            <div className="space-y-1.5">
+              <div className="text-[9px] font-bold">
+                <span className="bg-primary px-1 border border-black mr-1">HỌC SINH:</span>
+                <code className="bg-white px-1 border border-black">hs@bitbank.is-app.top</code> / <code>hocsinh@A</code>
+              </div>
+              <div className="text-[9px] font-bold">
+                <span className="bg-secondary px-1 border border-black mr-1">GIÁO VIÊN:</span>
+                <code className="bg-white px-1 border border-black">gv@bitbank.edu.vn</code> / <code>giaovien@A</code>
+              </div>
+              <div className="text-[9px] font-bold">
+                <span className="bg-black text-white px-1 border border-black mr-1">ADMIN:</span>
+                <code className="bg-white text-black px-1 border border-black">admin@bitbank.is-app.top</code> / <code>admin12@A</code>
+              </div>
+            </div>
+          </div>
         </CardFooter>
       </form>
     </Card>

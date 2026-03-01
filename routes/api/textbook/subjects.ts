@@ -9,14 +9,14 @@ export const handler = {
       const db = await getDb();
       const subjectList = await db.select().from(subjects);
 
-      // Add Computer Science by default if no subjects exist
+      // Add "Tin học" by default if no subjects exist
       if (subjectList.length === 0) {
-        await db.insert(subjects).values({
+        const defaultSubject = {
           id: crypto.randomUUID(),
-          name: "Computer Science"
-        });
-        const updatedList = await db.select().from(subjects);
-        return new Response(JSON.stringify(updatedList), {
+          name: "Tin học"
+        };
+        await db.insert(subjects).values(defaultSubject);
+        return new Response(JSON.stringify([defaultSubject]), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         });

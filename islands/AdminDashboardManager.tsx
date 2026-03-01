@@ -39,232 +39,98 @@ interface AdminDashboardManagerProps {
 }
 
 export default function AdminDashboardManager(
-  { stats, initialPendingQuestions }: AdminDashboardManagerProps,
+  { stats }: AdminDashboardManagerProps,
 ) {
-  const [pendingQuestions, setPendingQuestions] = useState(
-    initialPendingQuestions,
-  );
-  const [jsonInput, setJsonInput] = useState("");
-  const [showImportJson, setShowImportJson] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const approveQuestion = async (id: string) => {
-    try {
-      const res = await fetch("/api/questions/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (res.ok) {
-        setPendingQuestions(pendingQuestions.filter((q) => q.id !== id));
-      }
-    } catch (err) {
-      console.error("Failed to approve question:", err);
-    }
-  };
-
-  const rejectQuestion = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn từ chối câu hỏi này?")) return;
-    try {
-      const res = await fetch(`/api/questions/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setPendingQuestions(pendingQuestions.filter((q) => q.id !== id));
-      }
-    } catch (err) {
-      console.error("Failed to reject question:", err);
-    }
-  };
-
-  const handleImportJson = async () => {
-    if (!jsonInput.trim()) return;
-    setLoading(true);
-    try {
-      const parsed = JSON.parse(jsonInput);
-      const res = await fetch("/api/questions/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questions: parsed }),
-      });
-      if (res.ok) {
-        alert("Import thành công!");
-        setJsonInput("");
-        setShowImportJson(false);
-        window.location.reload();
-      } else {
-        const err = await res.json();
-        alert("Lỗi import: " + err.error);
-      }
-    } catch (e) {
-      alert("JSON không hợp lệ: " + e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {/* Thống kê người dùng */}
-      <Card className="border-2 border-black shadow-neo-sm bg-white overflow-hidden">
-        <div className="p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary border-2 border-black shadow-neo-sm">
-              <Users className="h-5 w-5 text-black" />
-            </div>
-            <h3 className="text-xl font-black uppercase italic tracking-tight text-black">
-              Người dùng
-            </h3>
+    <div className="space-y-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-primary p-4 flex flex-col gap-1 border-2 border-black shadow-neo-sm">
+          <div className="flex items-center gap-2">
+            <Users className="size-4" />
+            <span className="text-xs font-black uppercase italic tracking-tighter">Tổng người dùng</span>
           </div>
+          <span className="text-3xl font-black">{stats.totalUsers}</span>
+        </Card>
+
+        <Card className="bg-secondary p-4 flex flex-col gap-1 border-2 border-black shadow-neo-sm text-black">
+          <div className="flex items-center gap-2">
+            <Database className="size-4" />
+            <span className="text-xs font-black uppercase italic tracking-tighter">Câu hỏi hệ thống</span>
+          </div>
+          <span className="text-3xl font-black">{stats.questions}</span>
+        </Card>
+
+        <Card className="bg-accent p-4 flex flex-col gap-1 border-2 border-black shadow-neo-sm">
+          <div className="flex items-center gap-2">
+            <LayoutList className="size-4" />
+            <span className="text-xs font-black uppercase italic tracking-tighter">Lớp học</span>
+          </div>
+          <span className="text-3xl font-black">{stats.classes}</span>
+        </Card>
+
+        <Card className="bg-white p-4 flex flex-col gap-1 border-2 border-black shadow-neo-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="size-4" />
+            <span className="text-xs font-black uppercase italic tracking-tighter">Giáo viên</span>
+          </div>
+          <span className="text-3xl font-black">{stats.teachers}</span>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6 border-2 border-black shadow-neo bg-white">
+          <h3 className="text-lg font-black uppercase italic mb-4 border-b-2 border-black pb-2">
+            Hệ thống
+          </h3>
           <div className="grid grid-cols-1 gap-3">
-            <div className="p-4 bg-accent/10 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.teachers}/{stats.students}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-60 text-black tracking-widest mt-1">
-                Giáo viên / Học sinh
-              </div>
-            </div>
-            <div className="p-4 bg-primary/20 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.totalUsers}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-60 text-black tracking-widest mt-1">
-                Tổng số người dùng
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Tạo câu hỏi mới */}
-      <Card className="border-2 border-black shadow-neo-sm bg-white overflow-hidden">
-        <div className="p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary border-2 border-black shadow-neo-sm">
-              <Plus className="h-5 w-5 text-black" />
-            </div>
-            <h3 className="text-xl font-black uppercase italic tracking-tight text-black">
-              Tạo câu hỏi mới
-            </h3>
-          </div>
-          <p className="text-[10px] font-bold uppercase tracking-tight opacity-50 text-black leading-tight">
-            Tạo câu hỏi mới cho ngân hàng câu hỏi hệ thống.
-          </p>
-          <a href="/admin/create-question">
-            <Button className="w-full border-2 border-black font-black uppercase italic shadow-neo-sm h-10 bg-primary text-black text-xs">
-              TẠO CÂU HỎI MỚI
-            </Button>
-          </a>
-        </div>
-      </Card>
-
-      {/* Nhập câu hỏi JSON */}
-      <Card className="border-2 border-black shadow-neo-sm bg-white overflow-hidden">
-        <div className="p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-black border-2 border-black shadow-neo-sm">
-              <FileJson className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="text-xl font-black uppercase italic tracking-tight text-black">
-              Import JSON
-            </h3>
-          </div>
-          <p className="text-[10px] font-bold uppercase tracking-tight opacity-50 text-black leading-tight">
-            Thêm nhiều câu hỏi cùng lúc bằng định dạng JSON chuẩn.
-          </p>
-
-          {!showImportJson ? (
             <Button
-              onClick={() => setShowImportJson(true)}
-              className="w-full border-2 border-black font-black uppercase italic shadow-neo-sm h-10 bg-accent text-black text-xs"
+              className="justify-between group"
+              onClick={() => window.location.href = "/admin/users"}
             >
-              MỞ TRÌNH NHẬP DỮ LIỆU
+              QUẢN LÝ NGƯỜI DÙNG
+              <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
             </Button>
-          ) : (
-            <div className="space-y-3 animate-in zoom-in-95 duration-200">
-              <textarea
-                value={jsonInput}
-                onInput={(e) =>
-                  setJsonInput((e.target as HTMLTextAreaElement).value)}
-                placeholder='[{"content": "...", "type": "TN", ...}]'
-                className="w-full h-40 border-2 border-black p-3 font-mono text-[10px] focus:outline-none bg-accent/5"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowImportJson(false)}
-                  variant="outline"
-                  className="flex-1 border-2 border-black font-black uppercase italic h-10 text-xs"
-                >
-                  HỦY
-                </Button>
-                <Button
-                  onClick={handleImportJson}
-                  disabled={loading || !jsonInput}
-                  className="flex-[2] border-2 border-black font-black uppercase italic bg-primary text-black h-10 shadow-neo-sm text-xs"
-                >
-                  {loading ? "ĐANG IMPORT..." : "BẮT ĐẦU IMPORT"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
+            <Button
+              variant="outline"
+              className="justify-between group"
+              onClick={() => window.location.href = "/admin/questions"}
+            >
+              QUẢN LÝ CÂU HỎI
+              <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-between group"
+              onClick={() => window.location.href = "/admin/subjects"}
+            >
+              QUẢN LÝ MÔN HỌC
+              <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+        </Card>
 
-      {/* Thống kê hệ thống */}
-      <Card className="border-2 border-black shadow-neo-sm bg-white overflow-hidden lg:col-span-3">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-accent border-2 border-black shadow-neo-sm">
-                <Database className="h-5 w-5 text-black" />
-              </div>
-              <h3 className="text-xl font-black uppercase italic tracking-tight text-black">
-                Thống kê hệ thống
-              </h3>
+        <Card className="p-6 border-2 border-black shadow-neo bg-white">
+          <h3 className="text-lg font-black uppercase italic mb-4 border-b-2 border-black pb-2">
+            Thông tin
+          </h3>
+          <div className="space-y-4 text-sm font-bold uppercase italic opacity-70">
+            <div className="flex justify-between">
+              <span>Học sinh:</span>
+              <span>{stats.students}</span>
             </div>
-            <a href="/admin/subjects">
-              <Button variant="outline" className="h-9 border-2 border-black font-black uppercase italic text-[10px] bg-secondary shadow-neo-sm">
-                QUẢN LÝ MÔN HỌC <ChevronRight className="ml-2 h-3 w-3" />
-              </Button>
-            </a>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-accent/5 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.questions}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-50 text-black tracking-widest mt-1">
-                Tổng câu hỏi
-              </div>
+            <div className="flex justify-between">
+              <span>Giáo viên:</span>
+              <span>{stats.teachers}</span>
             </div>
-            <div className="p-4 bg-accent/5 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.classes}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-50 text-black tracking-widest mt-1">
-                Lớp học đang mở
-              </div>
-            </div>
-            <div className="p-4 bg-accent/5 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.teachers}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-50 text-black tracking-widest mt-1">
-                Giáo viên
-              </div>
-            </div>
-            <div className="p-4 bg-accent/5 border-2 border-black">
-              <div className="text-3xl font-black italic tracking-tighter text-black">
-                {stats.students}
-              </div>
-              <div className="text-[10px] font-black uppercase opacity-50 text-black tracking-widest mt-1">
-                Học sinh
-              </div>
+            <div className="flex justify-between">
+              <span>Admin:</span>
+              <span>{stats.totalUsers - stats.students - stats.teachers}</span>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
