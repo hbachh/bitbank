@@ -205,9 +205,11 @@ export default function ExamResultsIsland({
                         <span className="px-3 py-1 bg-green-100 text-green-800 border-2 border-green-300 font-bold uppercase text-xs">
                           Đã nộp
                         </span>
-                        {student.score !== undefined && (
+                        {student.hasSubmitted && (
                           <span className="font-bold text-lg text-black">
-                            {student.score}đ
+                            {student.submission?.isGraded 
+                              ? `${student.score}/${questions.length}`
+                              : `?/${questions.length}`}
                           </span>
                         )}
                         {student.submittedAt && (

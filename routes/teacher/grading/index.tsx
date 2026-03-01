@@ -19,9 +19,12 @@ export const handler = {
 
     const db = await getDb();
 
-    // Get all assignments by this teacher
+    // Get all assignments by this teacher (excluding self-study/practice)
     const teacherAssignments = await db.select().from(assignments).where(
-      eq(assignments.teacherId, user.id),
+      and(
+        eq(assignments.teacherId, user.id),
+        eq(assignments.type, "exam") // Only show real exams/assignments to teachers
+      )
     );
     const assignmentIds = teacherAssignments.map((a) => a.id);
 

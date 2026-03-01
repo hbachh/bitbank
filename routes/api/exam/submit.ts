@@ -5,6 +5,13 @@ import { and, count, eq, inArray } from "npm:drizzle-orm@0.35.3";
 import { v4 as uuidv4 } from "npm:uuid@^9.0.1";
 import { getCookies } from "$std/http/cookie.ts";
 import { verifyToken } from "../../../lib/jwt.ts";
+import config from "@/lib/config.ts";
+import { GoogleGenAI } from "@google/genai";
+
+// Google AI Studio API configuration for AI Grading
+const AI_API_KEY = config.get("GEMINI_API_KEY") || config.get("GEMMA_API_KEY") || "";
+const AI_MODEL = "gemma-3-27b-it";
+const ai = new GoogleGenAI({ apiKey: AI_API_KEY });
 
 export const handler = {
   async POST(req: Request, _ctx: FreshContext) {
@@ -20,14 +27,16 @@ export const handler = {
       const user = token ? await verifyToken(token) : null;
 
       const db = await getDb();
+      let assignmentType = "exam";
 
-      // Check attempt limit if it's an assignment
+      // Check attempt limit and type if it's an assignment
       if (assignmentId && user) {
         const assignmentData = await db.select().from(assignments).where(
           eq(assignments.id, assignmentId),
         ).limit(1);
         if (assignmentData.length > 0) {
           const asn = assignmentData[0];
+          assignmentType = asn.type || "exam";
           const submissionCount = await db.select({ value: count() }).from(
             submissions,
           ).where(
@@ -66,20 +75,23 @@ export const handler = {
       let score = 0;
       let hasPendingSA = false;
 
-      const results = questionList.map((q) => {
+      const results = await Promise.all(questionList.map(async (q) => {
         const userAnswer = answers[q.id];
         let isCorrect = false;
         let pendingGrading = false;
+        let explanation = "Sử dụng AI để giải thích chi tiết câu này.";
 
         if (q.type === "TN") {
           isCorrect = userAnswer === q.answer;
           if (isCorrect) score += 1;
         } else if (q.type === "TF") {
           try {
-            const correctData = JSON.parse(q.data || "[]");
+            const parsed = JSON.parse(q.data || "{}");
+            const subQuestions = parsed.subQuestions || [];
             isCorrect = true;
-            for (let i = 0; i < correctData.length; i++) {
-              if (userAnswer?.[i] !== correctData[i].correct) {
+            for (let i = 0; i < subQuestions.length; i++) {
+              const correctVal = subQuestions[i].answer === "true";
+              if (userAnswer?.[i] !== correctVal) {
                 isCorrect = false;
                 break;
               }
@@ -101,6 +113,45 @@ export const handler = {
             isCorrect = parseFloat(cleanUser) === parseFloat(cleanCorrect);
             if (isCorrect) score += 1;
             pendingGrading = false;
+          } else if (assignmentType === "practice" && AI_API_KEY) {
+            // AI Grading for practice self-study
+            try {
+              const prompt = `
+                Bạn là một giám khảo chấm thi Tin học. Hãy chấm điểm câu trả lời của học sinh cho câu hỏi sau:
+                Câu hỏi: "${q.content}"
+                Gợi ý đáp án đúng: "${q.answer}"
+                Câu trả lời của học sinh: "${userAnswer}"
+                
+                Hãy trả về kết quả dưới định dạng JSON:
+                {
+                  "isCorrect": boolean (true nếu câu trả lời đúng ít nhất 80% ý nghĩa),
+                  "explanation": string (giải thích ngắn gọn tại sao đúng hoặc sai)
+                }
+              `;
+              
+              const aiResponse = await ai.models.generateContent({
+                model: AI_MODEL,
+                contents: prompt,
+              });
+              
+              const aiText = aiResponse.text;
+              const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                const aiResult = JSON.parse(jsonMatch[0]);
+                isCorrect = aiResult.isCorrect;
+                explanation = aiResult.explanation;
+                if (isCorrect) score += 1;
+              } else {
+                // Fallback if AI fails to return JSON
+                isCorrect = cleanUser === cleanCorrect;
+                if (isCorrect) score += 1;
+              }
+              pendingGrading = false;
+            } catch (err) {
+              console.error("AI Grading error:", err);
+              hasPendingSA = true;
+              pendingGrading = true;
+            }
           } else {
             // Textual SA - let teacher grade
             hasPendingSA = true;
@@ -116,9 +167,9 @@ export const handler = {
           isCorrect,
           pendingGrading,
           correctAnswer: q.answer,
-          explanation: "Sử dụng AI để giải thích chi tiết câu này.",
+          explanation: explanation,
         };
-      });
+      }));
 
       // Save to database if it's an assignment
       if (assignmentId && user) {

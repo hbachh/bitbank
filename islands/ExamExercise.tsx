@@ -184,10 +184,10 @@ export default function ExamExercise(
     if (q.type === "TF") {
       try {
         const parsed = JSON.parse(q.data || "{}");
-        const options = Array.isArray(parsed) ? parsed : (parsed.options || []);
+        const subQuestions = parsed.subQuestions || [];
         return Object.entries(value).map(([idx, val]) => {
-          const opt = options[parseInt(idx)];
-          return `${opt?.text || idx}: ${val ? "ĐÚNG" : "SAI"}`;
+          const opt = subQuestions[parseInt(idx)];
+          return `${opt?.text || (parseInt(idx) + 1)}: ${val ? "ĐÚNG" : "SAI"}`;
         }).join(", ");
       } catch {
         return JSON.stringify(value);
@@ -235,6 +235,9 @@ export default function ExamExercise(
   }
 
   if (submitted && examResult) {
+    const isFullyGraded = !examResult.results.some(r => r.pendingGrading);
+    const scoreDisplay = isFullyGraded ? `${examResult.score} / ${examResult.total}` : `? / ${examResult.total}`;
+
     return (
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
         <div className="lg:col-span-8 space-y-6">
@@ -245,7 +248,7 @@ export default function ExamExercise(
               </div>
               <div>
                 <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
-                  {examResult.score} / {examResult.total}
+                  {scoreDisplay}
                 </h2>
                 <p className="text-sm font-black uppercase italic text-primary mt-1">
                   KẾT QUẢ BÀI LÀM
@@ -388,7 +391,7 @@ export default function ExamExercise(
     if (q.type === "TN") {
       options = Array.isArray(parsed) ? parsed : (parsed.options || []);
     } else if (q.type === "TF") {
-      options = Array.isArray(parsed) ? parsed : (parsed.items || []);
+      options = parsed.subQuestions || [];
     }
   } catch (_e) {
     options = [];

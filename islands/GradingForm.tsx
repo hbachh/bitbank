@@ -58,6 +58,24 @@ export default function GradingForm({ submission, results }: GradingFormProps) {
     }
   };
 
+  const getOptionText = (q: any, value: any) => {
+    if (!value) return "(Trống)";
+    if (q.type === "TN") return value;
+    if (q.type === "TF") {
+      try {
+        const parsed = typeof q.data === "string" ? JSON.parse(q.data || "{}") : q.data;
+        const subQuestions = parsed.subQuestions || [];
+        return Object.entries(value).map(([idx, val]) => {
+          const opt = subQuestions[parseInt(idx)];
+          return `${opt?.text || (parseInt(idx) + 1)}: ${val ? "ĐÚNG" : "SAI"}`;
+        }).join(", ");
+      } catch {
+        return JSON.stringify(value);
+      }
+    }
+    return value;
+  };
+
   return (
     <div className="space-y-6">
       {gradingResults.map((res, idx) => (
@@ -99,18 +117,18 @@ export default function GradingForm({ submission, results }: GradingFormProps) {
                   <p className="text-[10px] font-black opacity-50 uppercase mb-1">
                     Học sinh trả lời:
                   </p>
-                  <p className="font-bold text-black">
-                    {typeof res.userAnswer === "object"
-                      ? JSON.stringify(res.userAnswer)
-                      : res.userAnswer || "(Trống)"}
+                  <p className="font-bold text-black text-sm">
+                    {getOptionText(res.question || { type: res.type, data: res.question?.data }, res.userAnswer)}
                   </p>
                 </div>
                 <div className="p-3 border-2 border-black bg-accent/30">
                   <p className="text-[10px] font-black opacity-50 uppercase mb-1">
-                    Đáp án gợi ý:
+                    Đáp án đúng/Gợi ý:
                   </p>
-                  <p className="font-bold text-black">
-                    {res.correctAnswer || "(Không có)"}
+                  <p className="font-bold text-black text-sm">
+                    {res.type === "TF" ? getOptionText(res.question || { type: res.type, data: res.question?.data }, 
+                      res.question?.data ? (typeof res.question.data === "string" ? JSON.parse(res.question.data) : res.question.data).subQuestions?.map((sq: any) => sq.answer === "true") : null) 
+                      : (res.correctAnswer || "(Không có)")}
                   </p>
                 </div>
               </div>

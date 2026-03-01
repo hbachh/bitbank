@@ -95,10 +95,19 @@ export const handler = {
       .limit(10); // Limit to reasonable number
 
     // Fetch assignments
+    // If teacher, only show exams. If student, show both (but practice is personal)
+    // Actually, practice exercises are created by students for themselves, 
+    // but they are stored in the same assignments table with classId if relevant.
+    // The requirement says: "self-study exercises are only visible to students; they are not visible to the teachers"
+    const assignmentConditions = [eq(assignments.classId, classId)];
+    if (user.role === "teacher") {
+      assignmentConditions.push(eq(assignments.type, "exam"));
+    }
+
     const rawAssignments = await db
       .select()
       .from(assignments)
-      .where(eq(assignments.classId, classId));
+      .where(and(...assignmentConditions));
 
     // Fetch student's submissions for these assignments
     let studentSubmissions: any[] = [];

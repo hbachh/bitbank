@@ -156,8 +156,8 @@ export default function CreateQuestionForm(
 
     // Validation for TF questions
     if (type === "TF") {
-      const validSubQuestions = tfSubQuestions.filter(sq => sq.text.trim() !== "");
-      if (validSubQuestions.length < 2) {
+      const filledSubQuestions = tfSubQuestions.filter(sq => sq.text.trim() !== "");
+      if (filledSubQuestions.length < 2) {
         setMessage({ type: "error", text: "Câu hỏi Đúng/Sai phải có ít nhất 2 câu hỏi con." });
         setLoading(false);
         return;
@@ -172,7 +172,10 @@ export default function CreateQuestionForm(
       data = { options };
     } else if (type === "TF") {
       // Store TF questions with merged content and sub-questions
-      const validSubQuestions = tfSubQuestions.filter(sq => sq.text.trim() !== "");
+      const subQuestions = tfSubQuestions.map(sq => ({
+        text: sq.text.trim(),
+        answer: sq.answer // "true" or "false"
+      }));
       
       // Split content into main content and supplementary info
       const contentParts = tfContent.split('\n\n');
@@ -181,12 +184,13 @@ export default function CreateQuestionForm(
       
       data = {
         supplementaryInfo: supplementaryInfo,
-        subQuestions: validSubQuestions
+        subQuestions: subQuestions
       };
       // Store main content as the question content
       setContent(mainContent);
-      // For backward compatibility, store first sub-question answer as main answer
-      answer = validSubQuestions.length > 0 ? validSubQuestions[0].answer : "true";
+      // Store all answers as a comma-separated string for compatibility if needed, 
+      // but the source of truth will be the JSON data
+      answer = subQuestions.map(sq => sq.answer).join(",");
     } else {
       answer = saAnswer; // For SA, this is reference answer
     }
@@ -441,7 +445,7 @@ export default function CreateQuestionForm(
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="font-black uppercase italic text-xs">
-                Question Content/Additional Information:
+                Nội dung/Dữ kiện chung (Thông tin ở trên 4 câu hỏi con):
               </Label>
               <textarea
                 value={type === "TF" ? tfContent : content}
@@ -454,19 +458,19 @@ export default function CreateQuestionForm(
                 }}
                 required
                 className="w-full min-h-[100px] border-4 border-black p-3 font-bold text-sm shadow-neo-sm focus:outline-none"
-                placeholder="Enter question content and additional information (separated by blank line)..."
+                placeholder="Nhập nội dung dẫn dắt hoặc dữ kiện chung cho 4 câu hỏi con..."
               />
             </div>
             
             <div className="space-y-3">
-              <Label className="font-black uppercase italic text-xs">
-                Questions (minimum 2 required)
+              <Label className="font-black uppercase italic text-xs text-primary">
+                Câu hỏi con (Tối thiểu 2 câu)
               </Label>
               {tfSubQuestions.map((subQ, idx) => (
-                <div key={idx} className="border-2 border-black p-3 bg-accent/5">
+                <div key={idx} className="border-2 border-black p-3 bg-accent/5 shadow-neo-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-black text-sm">
-                      Question {String.fromCharCode(97 + idx)}:
+                    <span className="font-black text-sm shrink-0 w-8">
+                      {String.fromCharCode(97 + idx)})
                     </span>
                     <Input
                       value={subQ.text}
@@ -475,8 +479,9 @@ export default function CreateQuestionForm(
                         newSubQs[idx].text = (e.target as HTMLInputElement).value;
                         setTfSubQuestions(newSubQs);
                       }}
-                      placeholder={`Enter question ${String.fromCharCode(97 + idx)}`}
-                      className="flex-1 border-2 border-black"
+                      required
+                      placeholder={`Nhập nội dung câu hỏi ${String.fromCharCode(97 + idx)}`}
+                      className="flex-1 border-2 border-black h-10"
                     />
                   </div>
                   <div className="flex gap-4 ml-6">
