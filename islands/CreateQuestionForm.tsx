@@ -31,14 +31,17 @@ export default function CreateQuestionForm(
   const [grade, setGrade] = useState(String(initialData?.grade || "10"));
   const [content, setContent] = useState(initialData?.content || "");
   const [topicId, setTopicId] = useState(initialData?.topicId || "");
+  const [lessonId, setLessonId] = useState(initialData?.lessonId || "");
   const [lesson, setLesson] = useState(initialData?.lesson || "");
   const [isPublic, setIsPublic] = useState(
     initialData ? initialData.isPublic : true,
   );
 
   const [topicsList, setTopicsList] = useState<Topic[]>(topics || []);
+  const [lessonsList, setLessonsList] = useState<any[]>([]);
   const [subjectsList, setSubjectsList] = useState<any[]>(subjects || []);
   const [fetchingTopics, setFetchingTopics] = useState(false);
+  const [fetchingLessons, setFetchingLessons] = useState(false);
 
   // Parse initial data for options
   let initialOptions = ["", "", "", ""];
@@ -107,7 +110,10 @@ export default function CreateQuestionForm(
           if (res.ok) {
             const data = await res.json();
             setTopicsList(data);
-            if (data.length > 0) setTopicId(data[0].id);
+            if (data.length > 0) {
+              const firstTopicId = data[0].id;
+              setTopicId(firstTopicId);
+            }
             else setTopicId("");
           }
         } catch (err) {
@@ -119,6 +125,29 @@ export default function CreateQuestionForm(
       fetchData();
     }
   }, [grade, subjects, topics]);
+
+  // Fetch lessons when topic changes
+  useEffect(() => {
+    if (!topicId) {
+      setLessonsList([]);
+      return;
+    }
+    const fetchLessons = async () => {
+      setFetchingLessons(true);
+      try {
+        const res = await fetch(`/api/textbook/lessons?topicId=${topicId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLessonsList(data);
+        }
+      } catch (err) {
+        console.error("Error fetching lessons:", err);
+      } finally {
+        setFetchingLessons(false);
+      }
+    };
+    fetchLessons();
+  }, [topicId]);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -176,6 +205,7 @@ export default function CreateQuestionForm(
           type,
           grade,
           topicId,
+          lessonId,
           lesson,
           content,
           data,
@@ -201,6 +231,7 @@ export default function CreateQuestionForm(
           setContent("");
           setSaAnswer("");
           setLesson("");
+          setLessonId("");
         }
       } else {
         setMessage({ type: "error", text: result.error || "Lỗi khi lưu" });
@@ -289,7 +320,11 @@ export default function CreateQuestionForm(
           </Label>
           <select
             value={topicId}
-            onChange={(e) => setTopicId((e.target as HTMLSelectElement).value)}
+            onChange={(e) => {
+              const newTopicId = (e.target as HTMLSelectElement).value;
+              setTopicId(newTopicId);
+              setLessonId(""); // Reset lesson when topic changes
+            }}
             disabled={fetchingTopics}
             className="w-full h-10 md:h-12 border-4 border-black font-black uppercase italic text-xs md:text-sm px-3 bg-white shadow-neo-sm disabled:opacity-50"
           >
@@ -303,6 +338,43 @@ export default function CreateQuestionForm(
               ))
             )}
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="font-black uppercase italic text-xs">
+            Bài học (Lesson) - Chọn từ danh sách
+          </Label>
+          <select
+            value={lessonId}
+            onChange={(e) => {
+              const selLessonId = (e.target as HTMLSelectElement).value;
+              setLessonId(selLessonId);
+              // Also update the lesson string for compatibility
+              const selectedLesson = lessonsList.find(l => l.id === selLessonId);
+              if (selectedLesson) setLesson(selectedLesson.title);
+            }}
+            disabled={fetchingLessons || lessonsList.length === 0}
+            className="w-full h-10 md:h-12 border-4 border-black font-black uppercase italic text-xs md:text-sm px-3 bg-white shadow-neo-sm disabled:opacity-50"
+          >
+            <option value="">-- Chọn bài học --</option>
+            {lessonsList.map((l) => (
+              <option key={l.id} value={l.id}>{l.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="font-black uppercase italic text-xs">
+            Hoặc nhập tên bài học tùy chỉnh
+          </Label>
+          <Input
+            value={lesson}
+            onInput={(e) => setLesson((e.target as HTMLInputElement).value)}
+            placeholder="Ví dụ: Bài 1, Tiết 2..."
+            className="h-10 md:h-12 border-4 border-black font-black uppercase italic text-xs md:text-sm"
+          />
         </div>
       </div>
 

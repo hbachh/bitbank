@@ -32,10 +32,21 @@ export const handler = {
         conditions.push(eq(questions.lessonId, lessonId));
       }
 
-      const availableQuestions = await db
+      let availableQuestions = await db
         .select()
         .from(questions)
         .where(and(...conditions));
+
+      // Fallback: If no questions found for specific lesson, return all questions for the topic
+      if (availableQuestions.length === 0 && lessonId) {
+        availableQuestions = await db
+          .select()
+          .from(questions)
+          .where(and(
+            eq(questions.topicId, topicId),
+            eq(questions.isPublic, true),
+          ));
+      }
 
       return new Response(JSON.stringify(availableQuestions), {
         headers: { "Content-Type": "application/json" },

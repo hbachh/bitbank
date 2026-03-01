@@ -27,10 +27,21 @@ export const handler = {
         eq(questions.isPublic, true),
       ].filter(Boolean);
 
-      const allAvailableQuestions = await db
+      let allAvailableQuestions = await db
         .select()
         .from(questions)
         .where(and(...baseConditions as any));
+
+      // Fallback: If no questions found for specific lesson, try getting all questions for the topic
+      if (allAvailableQuestions.length === 0 && lessonId) {
+        allAvailableQuestions = await db
+          .select()
+          .from(questions)
+          .where(and(
+            eq(questions.topicId, topicId),
+            eq(questions.isPublic, true),
+          ));
+      }
 
       const tnQuestions = allAvailableQuestions.filter((q) => q.type === "TN");
       const tfQuestions = allAvailableQuestions.filter((q) => q.type === "TF");

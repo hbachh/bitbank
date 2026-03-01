@@ -28,7 +28,7 @@ export const handler = {
       }
 
       const body = await req.json();
-      const { type, grade, topicId, lesson, content, data, answer, isPublic } =
+      const { type, grade, topicId, lessonId, lesson, content, data, answer, isPublic } =
         body;
 
       if (!type || !grade || !content) {
@@ -44,6 +44,7 @@ export const handler = {
         type,
         grade: parseInt(grade),
         topicId: topicId || null,
+        lessonId: lessonId || null,
         lesson: lesson || null,
         content,
         data: data ? JSON.stringify(data) : null,
